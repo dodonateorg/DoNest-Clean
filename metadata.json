@@ -1,0 +1,6 @@
+{
+  "name": "DoNest",
+  "description": "Physical asset matches and community volunteer recruitment for Cameroonian and African orphanages, powered by DoDonate.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

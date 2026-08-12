@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", var(--font-sans);
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  
+  --color-brand-green: #00C853;
+  --color-brand-green-hover: #00B24A;
+  --color-brand-yellow: #FFE600;
+  --color-brand-dark: #0A1120;
+  --color-brand-bg: #FAF9F3;
+}
+
+body {
+  background-color: var(--color-brand-bg);
+  color: #1E293B;
+  font-family: var(--font-sans);
+}
+
+/* Hide scrollbars globally for an extremely clean and native feel */
+::-webkit-scrollbar {
+  display: none;
+}
+html, body {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+@keyframes bounce-x {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-bounce-x {
+  animation: bounce-x 1.2s ease-in-out infinite;
+}
+
+
+
