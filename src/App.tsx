@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CAMEROON_NGOS } from './data/ngos';
 import { NGO, PhysicalNeed, VolunteerPosting, CashWishlistItem } from './types';
 import Logo from './components/Logo';
+import { VolunteerCardIllustration } from './components/VolunteerCardIllustration';
+import { ExpandableText } from './components/ExpandableText';
 import DoDonateEngine from './components/DoDonateEngine';
 import NgoCard from './components/NgoCard';
 import SearchHero from './components/SearchHero';
@@ -144,6 +146,47 @@ const getRoutingKeyFromPathname = (pathname: string): string => {
   
   return '';
 };
+
+function NgoMissionBio({ description, lang }: { description: string; lang: 'EN' | 'FR' }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxLength = 250;
+
+  if (!description) return null;
+
+  if (description.length <= maxLength) {
+    return (
+      <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+        {description}
+      </p>
+    );
+  }
+
+  const displayText = isExpanded ? description : `${description.slice(0, maxLength)}...`;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+        {displayText}
+      </p>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#00C853] hover:text-emerald-700 cursor-pointer transition-colors focus:outline-hidden"
+      >
+        {isExpanded ? (
+          <>
+            <span>{lang === 'EN' ? 'See Less' : 'Voir Moins'}</span>
+            <ChevronUp className="w-3.5 h-3.5 stroke-[2.5]" />
+          </>
+        ) : (
+          <>
+            <span>{lang === 'EN' ? 'See More' : 'Voir Plus'}</span>
+            <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
 
 export default function App() {
   // Navigation Routing Hash State
@@ -568,9 +611,9 @@ export default function App() {
       description = 'Bypass middlemen and donate clothing, shoes, non-perishable food, textbooks, and hygiene kits directly to verified children\'s homes across Cameroon.';
       keywords = 'physical donations Cameroon, donate clothes Buea, food donation Douala, orphanage supplies Yaounde, direct giving Cameroon';
     } else if (currentHash === 'solutions/volunteer-network') {
-      title = 'Community Volunteer Network Cameroon - Tutor, Coach & Mentor | DoNest';
-      description = 'Join Cameroon\'s premier volunteer network for orphanages and children\'s homes. Offer tutoring, sports coaching, IT skills, or medical checkups and receive an official Attestation of Service.';
-      keywords = 'volunteer network Cameroon, teaching volunteer Buea, sports coaching Douala, volunteer attestation, DoNest volunteer network';
+      title = 'Community Volunteer Hub Cameroon - Tutor, Coach & Mentor | DoNest';
+      description = 'Join Cameroon\'s premier volunteer hub for orphanages and children\'s homes. Offer tutoring, sports coaching, IT skills, or medical checkups and receive an official Attestation of Service.';
+      keywords = 'volunteer hub Cameroon, teaching volunteer Buea, sports coaching Douala, volunteer attestation, DoNest volunteer hub';
     } else if (currentHash === 'solutions/volunteer-opportunities') {
       title = 'Live Volunteer Postings & Openings in Cameroon Orphanages | DoNest';
       description = 'Browse live volunteer positions across Buea, Douala, Yaoundé, and Limbe. Connect directly via WhatsApp to coordinate schedules.';
@@ -887,8 +930,11 @@ export default function App() {
     }
   };
 
-  // Filtered NGOs logic
+  // Filtered NGOs logic (Only show NGOs with account_status as LIVE)
   const filteredNgos = ngos.filter(ngo => {
+    const isLive = !ngo.account_status || ngo.account_status === 'LIVE';
+    if (!isLive) return false;
+
     const matchesCity = selectedCity === 'All' || ngo.city === selectedCity;
     
     const matchesQuery = searchQuery === '' || 
@@ -903,8 +949,8 @@ export default function App() {
     return matchesCity && matchesQuery && matchesCategory;
   });
 
-  // Find the selected NGO profile
-  const activeNgo = ngos.find(n => n.username === currentHash);
+  // Find the selected NGO profile (Only LIVE profiles accessible)
+  const activeNgo = ngos.find(n => n.username === currentHash && (!n.account_status || n.account_status === 'LIVE'));
 
   const SERVICE_HASHES = [
     'solutions/donations',
@@ -1061,20 +1107,17 @@ export default function App() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'solutions/volunteer-network' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>Volunteer Network</span>
+                    <span>Volunteer Hub</span>
                   </a>
-                  <a 
-                    href="/solution/csr"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-semibold transition-all ${
-                      currentHash === 'solutions/csr'
-                        ? 'bg-[#00C853]/10 text-[#00C853] font-bold border-l-4 border-[#00C853]'
-                        : 'text-gray-600 hover:bg-white hover:text-brand-dark'
-                    }`}
+                  <div 
+                    className="flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-gray-400 bg-slate-50/50 opacity-40 cursor-not-allowed select-none pointer-events-none"
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'solutions/csr' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>CSR For Companies</span>
-                  </a>
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                      <span>CSR For Companies</span>
+                    </div>
+                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Coming Soon</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -1191,21 +1234,15 @@ export default function App() {
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'company/about-us' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
                     <span>About Us</span>
                   </a>
-                  <a 
-                    href="/impact-stories"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-semibold transition-all ${
-                      currentHash === 'company/impact-stories'
-                        ? 'bg-[#00C853]/10 text-[#00C853] font-bold border-l-4 border-[#00C853]'
-                        : 'text-gray-600 hover:bg-white'
-                    }`}
+                  <div 
+                    className="flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-gray-400 bg-slate-50/50 opacity-40 cursor-not-allowed select-none pointer-events-none"
                   >
-                    <div className="flex items-center gap-2.5 flex-1">
-                      <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'company/impact-stories' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
                       <span>Impact Stories</span>
                     </div>
-                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase">Soon</span>
-                  </a>
+                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Coming Soon</span>
+                  </div>
                   <a 
                     href="/contact-us"
                     onClick={() => setIsMenuOpen(false)}
@@ -1340,7 +1377,7 @@ export default function App() {
                   {/* Middle Content */}
                   <div className="space-y-0.5">
                     <h3 className="font-display font-black text-[#0B1527] text-lg sm:text-xl tracking-tight leading-tight">
-                      {lang === 'EN' ? 'Volunteer Network' : 'Réseau de Bénévoles'}
+                      {lang === 'EN' ? 'Volunteer Hub' : 'Hub de Bénévolat'}
                     </h3>
                     <p className="text-gray-500 font-medium text-xs sm:text-sm leading-relaxed max-w-2xl">
                       {lang === 'EN' 
@@ -1714,9 +1751,7 @@ export default function App() {
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                   {lang === 'EN' ? 'Our Mission & Impact' : 'Notre Mission & Impact'}
                 </h4>
-                <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                  {activeNgo.description}
-                </p>
+                <NgoMissionBio description={activeNgo.description} lang={lang} />
               </div>
 
             </div>
@@ -1860,7 +1895,7 @@ export default function App() {
 
                 {/* Standalone separate volunteer request cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {activeNgo.volunteerPostings.filter(post => post.status !== 'deleted').map(post => {
+                  {activeNgo.volunteerPostings.filter(post => post.status !== 'deleted').map((post, postIndex) => {
                     const userLiked = hasInterested(post.id);
                     
                     return (
@@ -1874,6 +1909,11 @@ export default function App() {
                         className="bg-white border-2 border-gray-100 hover:border-emerald-300 p-6 sm:p-8 rounded-3xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 relative overflow-hidden cursor-pointer group shadow-xs"
                       >
                         <div className="space-y-4">
+                          {/* Top Illustration Banner */}
+                          <div className="h-36 w-full overflow-hidden relative rounded-2xl shrink-0 border border-gray-100">
+                            <VolunteerCardIllustration index={postIndex} title={post.title} city={activeNgo.city} />
+                          </div>
+
                           {/* Badge / Header info */}
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1 shadow-3xs">
@@ -1891,9 +1931,7 @@ export default function App() {
                             <h4 className="font-display font-black text-base text-brand-dark leading-snug group-hover:text-emerald-600 transition-colors">
                               {post.title}
                             </h4>
-                            <p className="text-gray-500 text-xs font-semibold leading-relaxed line-clamp-3">
-                              {post.details}
-                            </p>
+                            <ExpandableText text={post.details} limit={50} className="text-gray-500 text-xs font-semibold leading-relaxed" />
                           </div>
 
                           {/* Duration & Volunteer Details */}
@@ -2038,9 +2076,7 @@ export default function App() {
                 {/* Activity Overview */}
                 <div className="space-y-2 bg-slate-50/50 border border-gray-100 p-4 rounded-2xl">
                   <h4 className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Activity Overview</h4>
-                  <p className="text-gray-700 text-xs font-medium leading-relaxed">
-                    {activeApplyPost.post.details}
-                  </p>
+                  <ExpandableText text={activeApplyPost.post.details} limit={50} className="text-gray-700 text-xs font-medium leading-relaxed" />
                 </div>
 
                 <hr className="border-gray-100" />
@@ -2141,15 +2177,14 @@ export default function App() {
           
           {/* Top Brand Logo and Description Intro Area */}
           <div className="space-y-4">
-            <div className="flex items-center gap-1 font-display">
-              <span className="bg-[#00C853] text-white px-2.5 py-0.5 rounded-xl text-lg font-black tracking-tighter">Do</span>
-              <span className="bg-[#FFE600] text-black px-2.5 py-0.5 rounded-xl text-lg font-black tracking-tight">Nest</span>
+            <div className="flex items-center gap-3">
+              <Logo />
             </div>
             <p className="text-[#0B1527] font-display font-bold text-base leading-relaxed max-w-3xl">
               DoNest connects nonprofits with generous citizens, making it easy to donate essential items, volunteer your time, and support causes that strengthen communities.
             </p>
             <p className="text-xs font-bold text-gray-400 font-display">
-              DoNest is Powered by DoDonate Inc., a licensed NGO network partner in Buea, Cameroon.
+              DoNest is a DoDonate Inc. Product.
             </p>
           </div>
 
@@ -2175,18 +2210,18 @@ export default function App() {
                 <li>
                   <a href="/solution/volunteer-network" className="group flex flex-col items-start w-max">
                     <span className="font-display font-black text-[#0B1527] text-base leading-tight group-hover:text-[#00C853] transition-colors">
-                      Volunteer Network
+                      Volunteer Hub
                     </span>
                     <div className="w-6 h-[3.5px] bg-[#FFE600] mt-1 transition-all group-hover:bg-[#00C853] group-hover:w-10"></div>
                   </a>
                 </li>
                 <li>
-                  <a href="/solution/csr" className="group flex flex-col items-start w-max">
-                    <span className="font-display font-black text-[#0B1527] text-base leading-tight group-hover:text-[#00C853] transition-colors">
+                  <div className="flex items-center gap-2 opacity-40 cursor-not-allowed select-none pointer-events-none py-1">
+                    <span className="font-display font-black text-gray-400 text-base leading-tight">
                       CSR For Companies
                     </span>
-                    <div className="w-6 h-[3.5px] bg-[#FFE600] mt-1 transition-all group-hover:bg-[#00C853] group-hover:w-10"></div>
-                  </a>
+                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Soon</span>
+                  </div>
                 </li>
               </ul>
             </div>
@@ -2239,12 +2274,12 @@ export default function App() {
                   </a>
                 </li>
                 <li>
-                  <a href="/impact-stories" className="group flex flex-col items-start w-max">
-                    <span className="font-display font-black text-[#0B1527] text-base leading-tight group-hover:text-[#00C853] transition-colors">
+                  <div className="flex items-center gap-2 opacity-40 cursor-not-allowed select-none pointer-events-none py-1">
+                    <span className="font-display font-black text-gray-400 text-base leading-tight">
                       Impact Stories
                     </span>
-                    <div className="w-6 h-[3.5px] bg-[#FFE600] mt-1 transition-all group-hover:bg-[#00C853] group-hover:w-10"></div>
-                  </a>
+                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Soon</span>
+                  </div>
                 </li>
                 <li>
                   <a href="/contact-us" className="group flex flex-col items-start w-max">

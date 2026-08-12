@@ -52,4 +52,5 @@ export interface NGO {
   volunteerRequestsCount?: number;
   needsCount?: number;
   website?: string;
+  account_status?: 'LIVE' | 'PENDING' | 'PAUSED' | string;
 }

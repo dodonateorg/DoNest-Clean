@@ -89,11 +89,12 @@ let localApplicationsDb: VolunteerApplication[] = [];
 async function fetchAllNgosFromSupabase(): Promise<NGO[]> {
   if (!supabaseClient) throw new Error('Supabase client not initialized');
 
-  // Fetch from the real profiles table
+  // Fetch from the real profiles table - ONLY show NGOs with account_status as LIVE
   const { data: profiles, error: profilesError } = await supabaseClient
     .from('profiles')
     .select('*')
-    .eq('role', 'NGO');
+    .eq('role', 'NGO')
+    .eq('account_status', 'LIVE');
   if (profilesError) throw profilesError;
 
   // Fetch from the real essential_needs table
@@ -220,7 +221,8 @@ async function fetchAllNgosFromSupabase(): Promise<NGO[]> {
       cashWishlist: [], // Wishlist feature is removed as requested
       volunteerRequestsCount: profile.volunteer_requests_count || 0,
       needsCount: profile.needs_count || 0,
-      website: profile.website_url || profile.website || ''
+      website: profile.website_url || profile.website || '',
+      account_status: profile.account_status || 'LIVE'
     };
   });
 }
@@ -239,16 +241,19 @@ app.get('/api/ngos', async (req, res) => {
   if (isSupabaseConfigured && supabaseClient) {
     try {
       const dbNgos = await fetchAllNgosFromSupabase();
-      // Synchronize back to our local copy so they are in sync
-      localNgosDb = dbNgos;
-      return res.json(dbNgos);
+      // Filter strictly for LIVE account_status
+      const liveNgos = dbNgos.filter(n => n.account_status === 'LIVE');
+      localNgosDb = liveNgos;
+      return res.json(liveNgos);
     } catch (err: any) {
-      console.warn('⚠️ Supabase tables fetch failed. This probably means tables are not created yet in your Supabase dashboard. Falling back to local data. Error:', err.message);
-      // Fallback to local memory db
-      return res.json(localNgosDb);
+      console.warn('⚠️ Supabase tables fetch failed. Falling back to local data. Error:', err.message);
+      // Fallback to local memory db filtered for LIVE status
+      const liveFallback = localNgosDb.filter(n => !n.account_status || n.account_status === 'LIVE');
+      return res.json(liveFallback);
     }
   }
-  return res.json(localNgosDb);
+  const liveFallback = localNgosDb.filter(n => !n.account_status || n.account_status === 'LIVE');
+  return res.json(liveFallback);
 });
 
 // POST /api/ngos/sync - Sync current state back

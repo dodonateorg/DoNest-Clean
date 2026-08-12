@@ -11,6 +11,7 @@ export const CAMEROON_NGOS: NGO[] = [
     whatsappMessage: 'Hello Saint Rita Orphanage, I found you on DoNest and would like to support your physical needs!',
     description: 'Providing a safe nest, nutritious food, and sound education for over 45 vulnerable children in Yaoundé since 2012.',
     establishedYear: 2012,
+    account_status: 'LIVE',
     website: 'https://saintritahome.org',
     physicalNeeds: [
       {
@@ -100,6 +101,7 @@ export const CAMEROON_NGOS: NGO[] = [
     whatsappMessage: 'Hello Hope Nest Buea, I found you on DoNest and would like to help with items or volunteering!',
     description: 'Nurturing the hopes of orphaned youth in the South West region. We focus heavily on digital literacy and vocational training.',
     establishedYear: 2018,
+    account_status: 'LIVE',
     website: 'https://hopenestbuea.org',
     physicalNeeds: [
       {
@@ -171,6 +173,7 @@ export const CAMEROON_NGOS: NGO[] = [
     whatsappMessage: 'Hello Limbe Hope Haven, I want to support your physical needs or community volunteers!',
     description: 'A cozy coastal sanctuary offering full-time shelter, mental health counseling, and creative arts integration for 30 orphaned children.',
     establishedYear: 2015,
+    account_status: 'LIVE',
     website: 'https://limbehopehaven.org',
     physicalNeeds: [
       {
@@ -233,6 +236,7 @@ export const CAMEROON_NGOS: NGO[] = [
     whatsappMessage: 'Hello Grace & Mercies Home, I found you on DoNest and want to donate physical items!',
     description: 'Serving the bustling city of Douala by rescuing street children and providing them with secure shelter, clinical care, and reuniting them with family when possible.',
     establishedYear: 2010,
+    account_status: 'LIVE',
     website: 'https://doualagracehome.org',
     physicalNeeds: [
       {
@@ -304,6 +308,7 @@ export const CAMEROON_NGOS: NGO[] = [
     whatsappMessage: 'Hello Bamenda Rising Star, I want to donate items or volunteer to help the children!',
     description: 'Providing a resilient haven of hope and educational tools for children in the highlands of Bamenda, with safe community support systems.',
     establishedYear: 2014,
+    account_status: 'LIVE',
     website: 'https://bamendarisingstar.org',
     physicalNeeds: [
       {
@@ -358,6 +363,7 @@ export const CAMEROON_NGOS: NGO[] = [
     whatsappMessage: 'Hello Kumba Mercy Haven, I found you on DoNest and would love to support!',
     description: 'Dedicated to sheltering, feeding, and educating orphaned and displaced children in the Meme department. We operate with a strong community approach.',
     establishedYear: 2016,
+    account_status: 'LIVE',
     website: 'https://kumbamercyhaven.org',
     physicalNeeds: [
       {

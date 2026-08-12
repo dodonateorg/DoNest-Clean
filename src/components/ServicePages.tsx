@@ -34,6 +34,8 @@ import {
   Package
 } from 'lucide-react';
 import { NGO } from '../types';
+import { VolunteerCardIllustration } from './VolunteerCardIllustration';
+import { ExpandableText } from './ExpandableText';
 
 interface BackProps {
   onBack: () => void;
@@ -103,9 +105,6 @@ export function DonationsPage({ onBack }: BackProps) {
           <ChevronLeft className="w-4 h-4 text-gray-500" />
           Back to Directory
         </button>
-        <span className="text-xs font-mono text-[#00C853] bg-[#00C853]/10 px-3 py-1 rounded-full border border-[#00C853]/20">
-          In-Kind Logistics Panel
-        </span>
       </div>
 
       {/* 1. HERO SECTION */}
@@ -552,54 +551,6 @@ export function DonationsPage({ onBack }: BackProps) {
 }
 export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lang: string }) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [areaOfInterest, setAreaOfInterest] = useState('Orphanage Support Program');
-  const [availability, setAvailability] = useState('Flexible');
-  const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formSubmitted, setFormSubmitted] = useState(false);
-
-  const scrollToApply = () => {
-    const applyElem = document.getElementById('volunteer-apply-section');
-    if (applyElem) {
-      applyElem.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const selectProgramAndScroll = (programName: string) => {
-    setAreaOfInterest(programName);
-    scrollToApply();
-  };
-
-  const handleApplySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName || !email) return;
-
-    setIsSubmitting(true);
-    try {
-      await fetch('/api/volunteer/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postingId: 'general-web-apply',
-          ngoUsername: 'donest-network',
-          name: fullName,
-          email: email,
-          phone: '',
-          location: 'Cameroon',
-          message: `[Area: ${areaOfInterest}] [Availability: ${availability}] ${message}`
-        })
-      });
-      setFormSubmitted(true);
-    } catch (err) {
-      console.error('Error submitting application:', err);
-      // Fallback display success anyway to keep flow perfect
-      setFormSubmitted(true);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const faqItems = [
     {
@@ -635,9 +586,6 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
           <ChevronLeft className="w-4 h-4 text-gray-500" />
           {lang === 'EN' ? 'Back to Directory' : 'Retour au Répertoire'}
         </button>
-        <span className="text-xs font-mono text-rose-500 bg-rose-50 px-3 py-1 rounded-full border border-rose-100">
-          Volunteer Hub Panel
-        </span>
       </div>
 
       {/* 1. HERO SECTION */}
@@ -656,7 +604,7 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
         <div className="relative z-10 px-8 py-16 sm:px-12 sm:py-24 max-w-4xl space-y-6">
           <div className="inline-flex items-center gap-1.5 bg-rose-500/25 border border-rose-400/40 px-3 py-1.5 rounded-full text-xs font-extrabold text-rose-300 tracking-wide backdrop-blur-xs">
             <Users className="w-4 h-4 text-rose-300" />
-            <span>COMMUNITY VOLUNTEER NETWORK</span>
+            <span>COMMUNITY VOLUNTEER HUB</span>
           </div>
 
           <h1 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white leading-tight tracking-tight">
@@ -670,7 +618,7 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
 
           <div className="pt-4 flex flex-wrap gap-4">
             <button 
-              onClick={scrollToApply}
+              onClick={() => { window.location.hash = '#solutions/volunteer-opportunities'; }}
               className="bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white font-extrabold text-sm sm:text-base px-8 py-4 rounded-2xl shadow-md shadow-rose-500/20 hover:shadow-lg hover:shadow-rose-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer inline-flex items-center gap-2"
             >
               Become a Volunteer
@@ -727,141 +675,7 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
         </div>
       </div>
 
-      {/* 3. CAUSE AREAS / OPPORTUNITIES */}
-      <div className="space-y-10">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">
-            Where You Can Help
-          </h2>
-          <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
-            Choose the cause that speaks to you — or let us help you find the right fit.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1 */}
-          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs hover:shadow-md hover:border-rose-100 transition-all flex flex-col h-full">
-            <div className="h-44 overflow-hidden relative">
-              <img 
-                src="https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&q=80&w=600" 
-                alt="Orphanage Support Program" 
-                className="w-full h-full object-cover object-center"
-                referrerPolicy="no-referrer"
-              />
-              <span className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                On-site · Flexible
-              </span>
-            </div>
-            <div className="p-6 flex flex-col justify-between flex-grow space-y-4">
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Orphanage Support</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Spend time mentoring, teaching, and caring for children in partner orphanages.
-                </p>
-              </div>
-              <button 
-                onClick={() => selectProgramAndScroll('Orphanage Support Program')}
-                className="text-xs font-black text-rose-500 hover:text-rose-600 inline-flex items-center gap-1.5 cursor-pointer text-left self-start"
-              >
-                Volunteer for This
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs hover:shadow-md hover:border-amber-100 transition-all flex flex-col h-full">
-            <div className="h-44 overflow-hidden relative">
-              <img 
-                src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600" 
-                alt="Educational Tutoring" 
-                className="w-full h-full object-cover object-center"
-                referrerPolicy="no-referrer"
-              />
-              <span className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                On-site · Weekends
-              </span>
-            </div>
-            <div className="p-6 flex flex-col justify-between flex-grow space-y-4">
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Educational Tutoring</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Help bridge the academic gap by becoming a weekend tutor in math, science, or reading.
-                </p>
-              </div>
-              <button 
-                onClick={() => selectProgramAndScroll('Educational Tutoring')}
-                className="text-xs font-black text-amber-600 hover:text-amber-700 inline-flex items-center gap-1.5 cursor-pointer text-left self-start"
-              >
-                Volunteer for This
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs hover:shadow-md hover:border-blue-100 transition-all flex flex-col h-full">
-            <div className="h-44 overflow-hidden relative">
-              <img 
-                src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=600" 
-                alt="Sports & Arts Coaching" 
-                className="w-full h-full object-cover object-center"
-                referrerPolicy="no-referrer"
-              />
-              <span className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                On-site · Flexible
-              </span>
-            </div>
-            <div className="p-6 flex flex-col justify-between flex-grow space-y-4">
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Sports & Arts Coaching</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Bring smiles and therapeutic engagement to youth through structured sports, games, and creative arts.
-                </p>
-              </div>
-              <button 
-                onClick={() => selectProgramAndScroll('Sports & Arts Coaching')}
-                className="text-xs font-black text-blue-500 hover:text-blue-600 inline-flex items-center gap-1.5 cursor-pointer text-left self-start"
-              >
-                Volunteer for This
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 4 */}
-          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs hover:shadow-md hover:border-emerald-100 transition-all flex flex-col h-full">
-            <div className="h-44 overflow-hidden relative">
-              <img 
-                src="https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=600" 
-                alt="Nutrition & Care Assistance" 
-                className="w-full h-full object-cover object-center"
-                referrerPolicy="no-referrer"
-              />
-              <span className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                On-site · Ongoing
-              </span>
-            </div>
-            <div className="p-6 flex flex-col justify-between flex-grow space-y-4">
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Nutrition & Care</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Assist community kitchens and orphanage staff with meal preparation and physical facility care.
-                </p>
-              </div>
-              <button 
-                onClick={() => selectProgramAndScroll('Nutrition & Care Assistance')}
-                className="text-xs font-black text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1.5 cursor-pointer text-left self-start"
-              >
-                Volunteer for This
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. HOW IT WORKS */}
+      {/* 3. HOW IT WORKS / GETTING STARTED IS SIMPLE */}
       <div className="space-y-10">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">
@@ -878,9 +692,9 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
             <span className="text-xs font-mono font-bold text-rose-500 bg-rose-50 border border-rose-100 px-2.5 py-1 rounded-full">
               STAGE 01
             </span>
-            <h3 className="font-display font-bold text-base text-slate-900">Apply</h3>
+            <h3 className="font-display font-bold text-base text-slate-900">Find Opportunity</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Fill out a short application telling us about yourself and what cause interests you.
+              Find a volunteer opportunity on the Volunteer Hub or NGO profile page.
             </p>
           </div>
 
@@ -889,9 +703,9 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
             <span className="text-xs font-mono font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-full">
               STAGE 02
             </span>
-            <h3 className="font-display font-bold text-base text-slate-900">Get Matched</h3>
+            <h3 className="font-display font-bold text-base text-slate-900">Select & Apply</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              We connect you with a program that fits your interests, skills, and availability.
+              Select "Learn More", fill out the form, and wait for the organization to accept.
             </p>
           </div>
 
@@ -902,7 +716,7 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
             </span>
             <h3 className="font-display font-bold text-base text-slate-900">Volunteer</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Show up and make a real difference — we'll support you every single step of the way.
+              Show up and carry out your volunteer activities with the organization.
             </p>
           </div>
 
@@ -913,13 +727,13 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
             </span>
             <h3 className="font-display font-bold text-base text-slate-900">Receive Attestation</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              After completing your volunteer hours, you'll receive an official Attestation of Service, signed and ready to use.
+              Receive your verified attestation documentation confirming your service hours.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 5. WHAT YOU GAIN */}
+      {/* 4. WHAT YOU GAIN */}
       <div className="space-y-10">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">
@@ -985,7 +799,7 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
         </div>
       </div>
 
-      {/* 6. FAQ */}
+      {/* 5. FAQ */}
       <div className="space-y-10">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">
@@ -1025,160 +839,35 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
           })}
         </div>
       </div>
-
-      {/* 7. APPLY / CTA FORM */}
-      <div id="volunteer-apply-section" className="bg-slate-900 border border-slate-800 rounded-3xl p-8 sm:p-12 text-white overflow-hidden relative">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl -z-0 pointer-events-none" />
-        <div className="absolute left-0 bottom-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -z-0 pointer-events-none" />
-
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Info Side */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-1.5 bg-rose-500/20 border border-rose-400/30 px-3 py-1.5 rounded-full text-xs font-black text-rose-300 tracking-wide uppercase">
-              <Mail className="w-3.5 h-3.5" />
-              <span>APPLY ONLINE</span>
-            </div>
-
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white leading-tight">
-              Ready to Volunteer?
-            </h2>
-
-            <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-              Tell us a bit about yourself and we'll help match you with the right program. No complicated credentials required.
-            </p>
-
-            <div className="flex items-center gap-4 bg-slate-800/50 border border-slate-700/50 p-4 rounded-2xl max-w-lg">
-              <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/30 shrink-0">
-                <Award className="w-5 h-5" />
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="font-display font-bold text-sm text-slate-100">Attestation of Service Guaranteed</h4>
-                <p className="text-[11px] text-slate-400">
-                  Earn signed hours recognized by international boards, schools, and HR directors.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Side */}
-          <div className="lg:col-span-6">
-            {formSubmitted ? (
-              <div className="bg-slate-950/50 border border-emerald-500/40 p-8 rounded-3xl text-center space-y-4 backdrop-blur-md animate-fade-in">
-                <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                  <Check className="w-6 h-6" />
-                </div>
-                <h3 className="font-display font-black text-xl text-white">Application Received!</h3>
-                <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
-                  Thank you for applying. Mirabelle and our Volunteer Services team will contact you within 24 to 48 hours to confirm placement next steps.
-                </p>
-                <div className="pt-2">
-                  <button 
-                    onClick={() => setFormSubmitted(false)} 
-                    className="text-xs text-rose-400 hover:text-rose-300 underline underline-offset-4 cursor-pointer font-bold"
-                  >
-                    Submit another application
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleApplySubmit} className="bg-slate-950/40 border border-slate-800 p-6 sm:p-8 rounded-3xl space-y-4 backdrop-blur-md">
-                {/* Full name */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Full Name</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="Enter your full name" 
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs sm:text-sm focus:outline-hidden focus:border-rose-500/60 focus:ring-2 focus:ring-rose-500/15 transition-all placeholder:text-slate-600"
-                  />
-                </div>
-
-                {/* Email */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Email Address</label>
-                  <input 
-                    type="email" 
-                    required
-                    placeholder="name@company.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs sm:text-sm focus:outline-hidden focus:border-rose-500/60 focus:ring-2 focus:ring-rose-500/15 transition-all placeholder:text-slate-600"
-                  />
-                </div>
-
-                {/* Grid Area & Availability */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Area of Interest */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Area of Interest</label>
-                    <select
-                      value={areaOfInterest}
-                      onChange={(e) => setAreaOfInterest(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs focus:outline-hidden focus:border-rose-500/60 focus:ring-2 focus:ring-rose-500/15 transition-all"
-                    >
-                      <option value="Orphanage Support Program">Orphanage Support</option>
-                      <option value="Educational Tutoring">Educational Tutoring</option>
-                      <option value="Sports & Arts Coaching">Sports & Arts Coaching</option>
-                      <option value="Nutrition & Care Assistance">Nutrition & Care Assistance</option>
-                    </select>
-                  </div>
-
-                  {/* Availability */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Availability</label>
-                    <select
-                      value={availability}
-                      onChange={(e) => setAvailability(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs focus:outline-hidden focus:border-rose-500/60 focus:ring-2 focus:ring-rose-500/15 transition-all"
-                    >
-                      <option value="Flexible">Flexible / On Call</option>
-                      <option value="Weekends">Weekends Only</option>
-                      <option value="Weekdays">Weekdays Only</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Optional Message */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Message (Optional)</label>
-                  <textarea 
-                    rows={2}
-                    placeholder="Tell us a little about your goals or availability..." 
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs focus:outline-hidden focus:border-rose-500/60 focus:ring-2 focus:ring-rose-500/15 transition-all placeholder:text-slate-600 resize-none"
-                  />
-                </div>
-
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white font-extrabold text-sm sm:text-base py-4 rounded-xl shadow-lg shadow-rose-500/15 hover:shadow-rose-500/25 transition-all text-center inline-block cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Sending...' : 'Submit Application'}
-                </button>
-
-                <div className="text-center pt-2 space-y-1">
-                  <p className="text-[11px] text-slate-400">
-                    Prefer email? Reach us directly at{' '}
-                    <a href="mailto:volunteer@dodonate.org" className="text-rose-400 hover:underline font-bold">
-                      volunteer@dodonate.org
-                    </a>
-                  </p>
-                  <p className="text-[10px] text-slate-500">
-                    We typically respond within 24–48 hours with next steps.
-                  </p>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
+
+const getVolunteerCardImage = (title: string, index: number) => {
+  const lower = title.toLowerCase();
+  if (lower.includes('tutor') || lower.includes('teach') || lower.includes('read') || lower.includes('book') || lower.includes('educat') || lower.includes('class')) {
+    return 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600';
+  }
+  if (lower.includes('sport') || lower.includes('coach') || lower.includes('art') || lower.includes('game') || lower.includes('play') || lower.includes('music')) {
+    return 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=600';
+  }
+  if (lower.includes('food') || lower.includes('nutrit') || lower.includes('cook') || lower.includes('meal') || lower.includes('kitchen') || lower.includes('diner')) {
+    return 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=600';
+  }
+  if (lower.includes('care') || lower.includes('health') || lower.includes('doctor') || lower.includes('nurse') || lower.includes('medical') || lower.includes('hygiene')) {
+    return 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=600';
+  }
+  if (lower.includes('computer') || lower.includes('tech') || lower.includes('code') || lower.includes('digital') || lower.includes('it')) {
+    return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600';
+  }
+  const fallbacks = [
+    'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&q=80&w=600',
+    'https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&q=80&w=600',
+    'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=600',
+    'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=600'
+  ];
+  return fallbacks[index % fallbacks.length];
+};
 
 export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasInterested, lang }: VolunteerNetworkProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -1268,7 +957,7 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
       <div className="bg-white border-2 border-gray-100 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
         <div className="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-4 py-1.5 rounded-full text-xs font-black text-rose-600 tracking-wide">
           <Users className="w-4 h-4 text-rose-600" />
-          <span>COMMUNITY VOLUNTEER NETWORK</span>
+          <span>COMMUNITY VOLUNTEER HUB</span>
         </div>
         
         <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-[#0A1120] leading-tight">
@@ -1276,7 +965,7 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
         </h1>
         
         <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-medium">
-          Beyond physical assets, local orphanages thrive on human connection, mentorship, and support staff. The Volunteer Network matches passionate professionals, students, and citizens with open community tutoring, sports coaching, and assistance roles.
+          Beyond physical assets, local orphanages thrive on human connection, mentorship, and support staff. The Volunteer Hub matches passionate professionals, students, and citizens with open community tutoring, sports coaching, and assistance roles.
         </p>
 
         {/* Search controls inside Volunteer block */}
@@ -1311,7 +1000,7 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {filteredPostings.map(({ ngo, post }) => {
+            {filteredPostings.map(({ ngo, post }, index) => {
               const isLiked = hasInterested(post.id);
 
               return (
@@ -1324,6 +1013,11 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
                   className="bg-white border-2 border-gray-100 hover:border-emerald-300 p-6 sm:p-8 rounded-3xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 relative overflow-hidden cursor-pointer group shadow-xs"
                 >
                   <div className="space-y-4">
+                    {/* Top Illustration / Color Palette Vector Banner */}
+                    <div className="h-36 sm:h-40 w-full overflow-hidden relative rounded-2xl shrink-0 border border-gray-100">
+                      <VolunteerCardIllustration index={index} title={post.title} city={ngo.city} />
+                    </div>
+
                     {/* Badge / Header info */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1 shadow-3xs">
@@ -1360,9 +1054,7 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
                       <h4 className="font-display font-black text-base text-brand-dark leading-snug group-hover:text-emerald-600 transition-colors">
                         {post.title}
                       </h4>
-                      <p className="text-gray-500 text-xs font-semibold leading-relaxed line-clamp-3">
-                        {post.details}
-                      </p>
+                      <ExpandableText text={post.details} limit={50} className="text-gray-500 text-xs font-semibold leading-relaxed" />
                     </div>
 
                     {/* Duration & Volunteer Details */}
@@ -1493,9 +1185,7 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
                 {/* Activity Overview */}
                 <div className="space-y-2 bg-slate-50/50 border border-gray-100 p-4 rounded-2xl">
                   <h4 className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Activity Overview</h4>
-                  <p className="text-gray-700 text-xs font-medium leading-relaxed">
-                    {activeApplyPost.post.details}
-                  </p>
+                  <ExpandableText text={activeApplyPost.post.details} limit={50} className="text-gray-700 text-xs font-medium leading-relaxed" />
                 </div>
 
                 <hr className="border-gray-100" />
@@ -1627,9 +1317,6 @@ export function CsrPage({ onBack }: BackProps) {
           <ChevronLeft className="w-4 h-4 text-gray-500" />
           Back to Directory
         </button>
-        <span className="text-xs font-mono text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
-          Corporate Relations Panel
-        </span>
       </div>
 
       {/* 1. HERO SECTION */}
