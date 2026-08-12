@@ -1614,7 +1614,17 @@ export default function App() {
         {/* VIEW 3: SERVICE PAGES */}
         {isServicePage && (
           <div className="space-y-8 animate-fade-in">
-            {currentHash === 'solutions/donations' && <DonationsPage onBack={() => navigate('')} />}
+            {currentHash === 'solutions/donations' && (
+              <DonationsPage 
+                onBack={() => navigate('')} 
+                onGoToFilter={() => {
+                  navigate('');
+                  setTimeout(() => {
+                    document.getElementById('filter-panel')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }} 
+              />
+            )}
             {currentHash === 'solutions/volunteer-network' && (
               <VolunteerNetworkPage 
                 onBack={() => navigate('')} 

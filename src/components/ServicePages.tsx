@@ -49,14 +49,12 @@ interface VolunteerNetworkProps {
   lang: string;
 }
 
-export function DonationsPage({ onBack }: BackProps) {
-  const [fullName, setFullName] = useState('');
-  const [contactInfo, setContactInfo] = useState('');
-  const [itemsToDonate, setItemsToDonate] = useState('');
-  const [pickupDate, setPickupDate] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formSubmitted, setFormSubmitted] = useState(false);
+interface DonationsPageProps {
+  onBack: () => void;
+  onGoToFilter?: () => void;
+}
 
+export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
   const scrollToSection = (id: string) => {
     const elem = document.getElementById(id);
     if (elem) {
@@ -64,33 +62,14 @@ export function DonationsPage({ onBack }: BackProps) {
     }
   };
 
-  const handlePickupSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName || !contactInfo || !itemsToDonate) return;
-
-    setIsSubmitting(true);
-    try {
-      // Direct call to general application proxy API or local state representation
-      await fetch('/api/volunteer/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postingId: 'physical-donation-pickup',
-          ngoUsername: 'donest-network',
-          name: fullName,
-          email: contactInfo,
-          phone: '',
-          location: 'Cameroon',
-          message: `[Pickup Request] [Preferred Date: ${pickupDate}] [Items: ${itemsToDonate}]`
-        })
-      });
-      setFormSubmitted(true);
-    } catch (err) {
-      console.error('Error submitting pickup request:', err);
-      // Fallback display success anyway
-      setFormSubmitted(true);
-    } finally {
-      setIsSubmitting(false);
+  const handleFilterClick = () => {
+    if (onGoToFilter) {
+      onGoToFilter();
+    } else {
+      onBack();
+      setTimeout(() => {
+        document.getElementById('filter-panel')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -109,7 +88,6 @@ export function DonationsPage({ onBack }: BackProps) {
 
       {/* 1. HERO SECTION */}
       <div className="relative overflow-hidden rounded-3xl shadow-lg border border-[#00C853]/10 bg-slate-950 text-white">
-        {/* Full-bleed photo of real volunteer items unpacked & handled */}
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1600" 
@@ -120,430 +98,262 @@ export function DonationsPage({ onBack }: BackProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-900/40" />
         </div>
 
-        <div className="relative z-10 px-8 py-16 sm:px-12 sm:py-24 max-w-4xl space-y-6">
+        <div className="relative z-10 px-8 py-16 sm:px-12 sm:py-20 max-w-4xl space-y-6">
           <div className="inline-flex items-center gap-1.5 bg-[#00C853]/20 border border-[#00C853]/40 px-3 py-1.5 rounded-full text-xs font-extrabold text-[#00E676] tracking-wide backdrop-blur-xs">
             <Heart className="w-4 h-4 text-[#00E676]" />
-            <span>DIRECT DONATIONS SOLUTION</span>
+            <span>DIRECT ITEM DONATIONS</span>
           </div>
 
           <h1 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white leading-tight tracking-tight">
-            Give What You Have.<br />
-            Change <span className="text-[#00E676]">What's Possible.</span>
+            Don't Waste Useful Items.<br />
+            <span className="text-[#00E676]">Donate Them.</span>
           </h1>
 
           <p className="text-slate-200 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
-            From clothing to school supplies, your physical donations go directly to the communities and programs that need them. No wasted surplus, no logistical bottlenecks.
+            A lot of people around the world throw away clothes, shoes, books, bags and more when they no longer have use for them — so we created this platform so that instead of wasting something good and valuable, you can simply donate it to orphanages and people in need around you.
           </p>
 
-          <div className="pt-4 flex flex-wrap gap-4">
+          <div className="pt-2 flex flex-wrap gap-4">
             <button 
-              onClick={() => scrollToSection('what-we-need-section')}
+              onClick={() => scrollToSection('how-it-works-section')}
               className="bg-[#00C853] hover:bg-[#00E676] active:bg-[#00C853] text-slate-950 font-black text-sm sm:text-base px-8 py-4 rounded-2xl shadow-md shadow-[#00C853]/20 hover:shadow-lg hover:shadow-[#00C853]/30 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer inline-flex items-center gap-2"
             >
-              See What We Need
+              See How It Works
               <ArrowRight className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={handleFilterClick}
+              className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm sm:text-base px-8 py-4 rounded-2xl transition-all cursor-pointer inline-flex items-center gap-2"
+            >
+              Browse Nearby Orphanages
             </button>
           </div>
         </div>
       </div>
 
-      {/* 2. WHAT WE NEED (Wishlist / Most Needed) */}
-      <div id="what-we-need-section" className="bg-emerald-50/40 border border-emerald-100/50 rounded-3xl p-8 sm:p-10 space-y-8 scroll-mt-6">
-        <div className="space-y-2 max-w-2xl">
+      {/* 2. DONATE IN 3 SIMPLE STEPS */}
+      <div id="how-it-works-section" className="space-y-8 scroll-mt-6">
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1.5 bg-[#00C853]/10 px-3 py-1 rounded-full text-xs font-bold text-[#00C853]">
-            <span>LIVE CAMPAIGN</span>
+            <span>✓ SIMPLE LOGISTICS</span>
           </div>
           <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">
-            Right Now, We Need
+            Donate in 3 Simple Steps
           </h2>
           <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
-            These are our most urgent needs — your donation of any of these makes an immediate difference.
+            Connecting donors directly with local children's homes and non-profits in your community.
           </p>
         </div>
 
-        {/* Format: highlighted mini-cards to prevent guesswork */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-emerald-100/60 shadow-2xs space-y-2">
-            <span className="text-2xl">🎒</span>
-            <h4 className="font-display font-bold text-sm text-slate-900">School Supplies</h4>
-            <p className="text-[11px] text-gray-500 leading-normal">
-              Notebooks, pens, school bags, crayons, and educational kits.
-            </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+          {/* Step 01 */}
+          <div className="bg-slate-50 border border-slate-200/80 p-8 rounded-3xl space-y-4 flex flex-col justify-between hover:border-emerald-400 hover:shadow-md transition-all">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black font-mono text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3.5 py-1.5 rounded-full uppercase tracking-wider">
+                  Step 01
+                </span>
+                <span className="text-2xl">🏡</span>
+              </div>
+              <h3 className="font-display font-extrabold text-xl text-slate-900">
+                Find an orphanage near you
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                Browse our verified list of orphanages, children's homes, and community centers in your local city or region.
+              </p>
+            </div>
+            <div className="pt-2">
+              <button 
+                onClick={handleFilterClick}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00C853] hover:text-[#009624] hover:underline cursor-pointer"
+              >
+                Explore Orphanage Directory &rarr;
+              </button>
+            </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-emerald-100/60 shadow-2xs space-y-2">
-            <span className="text-2xl">👕</span>
-            <h4 className="font-display font-bold text-sm text-slate-900">Children's Clothing</h4>
-            <p className="text-[11px] text-gray-500 leading-normal">
-              Clean and wearable shirts, trousers, and sweaters of all sizes.
-            </p>
+          {/* Step 02 */}
+          <div className="bg-slate-50 border border-slate-200/80 p-8 rounded-3xl space-y-4 flex flex-col justify-between hover:border-emerald-400 hover:shadow-md transition-all">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black font-mono text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3.5 py-1.5 rounded-full uppercase tracking-wider">
+                  Step 02
+                </span>
+                <span className="text-2xl">📱</span>
+              </div>
+              <h3 className="font-display font-extrabold text-xl text-slate-900">
+                Contact them about your donation.
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                Reach out directly via WhatsApp, phone call, or message to tell them what items you have ready to give.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-emerald-100/60 shadow-2xs space-y-2">
-            <span className="text-2xl">🍲</span>
-            <h4 className="font-display font-bold text-sm text-slate-900">Non-Perishable Food</h4>
-            <p className="text-[11px] text-gray-500 leading-normal">
-              Rice, beans, cooking oil, canned fish, and powdered milk.
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-emerald-100/60 shadow-2xs space-y-2">
-            <span className="text-2xl">🧼</span>
-            <h4 className="font-display font-bold text-sm text-slate-900">Hygiene Products</h4>
-            <p className="text-[11px] text-gray-500 leading-normal">
-              Antiseptic soap, toothbrushes, toothpaste, and towels.
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-emerald-100/60 shadow-2xs space-y-2">
-            <span className="text-2xl">🛏️</span>
-            <h4 className="font-display font-bold text-sm text-slate-900">Bedding & Blankets</h4>
-            <p className="text-[11px] text-gray-500 leading-normal">
-              Clean sheets, pillowcases, and warm wool/fleece blankets.
-            </p>
+          {/* Step 03 */}
+          <div className="bg-slate-50 border border-slate-200/80 p-8 rounded-3xl space-y-4 flex flex-col justify-between hover:border-emerald-400 hover:shadow-md transition-all">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black font-mono text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3.5 py-1.5 rounded-full uppercase tracking-wider">
+                  Step 03
+                </span>
+                <span className="text-2xl">🚚</span>
+              </div>
+              <h3 className="font-display font-extrabold text-xl text-slate-900">
+                Pick up or visit
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                The orphanage will come pick up your donation or you can visit them yourself and donate.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 3. DONATION CATEGORIES */}
-      <div className="space-y-10">
+      {/* 3. DONATION CATEGORIES (WHAT YOU CAN DONATE) */}
+      <div className="space-y-8">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">
             What You Can Donate
           </h2>
           <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
-            Verify where your items belong across our primary logistical categories.
+            Give your gently used or extra items a meaningful second life instead of letting them go to waste.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Card 1 */}
-          <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-md transition-all flex flex-col justify-between">
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-start">
-                <span className="text-3xl">👕</span>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">Most needed</span>
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Clothing & Essentials</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Shoes, coats, shirts, skirts, children's clothing, and daily wear accessories.
-                </p>
-              </div>
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 space-y-4 hover:shadow-md transition-all">
+            <div className="flex justify-between items-start">
+              <span className="text-3xl">👕</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">High Demand</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-base text-slate-900">Clothing & Shoes</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Shirts, trousers, dresses, coats, sweaters, shoes, and sandals for children and teenagers.
+              </p>
             </div>
           </div>
 
           {/* Card 2 */}
-          <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-md transition-all flex flex-col justify-between">
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-start">
-                <span className="text-3xl">🌾</span>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Most needed</span>
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Food & Beverages</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Rice, vegetable oil, beans, salt, pasta, powdered milk, and canned provisions.
-                </p>
-              </div>
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 space-y-4 hover:shadow-md transition-all">
+            <div className="flex justify-between items-start">
+              <span className="text-3xl">📚</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">High Demand</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-base text-slate-900">Books & Educational Supplies</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Textbooks, storybooks, notebooks, pens, pencils, geometry sets, and school bags.
+              </p>
             </div>
           </div>
 
           {/* Card 3 */}
-          <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-md transition-all flex flex-col justify-between">
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-start">
-                <span className="text-3xl">📚</span>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">Active Campaign</span>
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">School & Educational</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Standard syllabus books, drawing notebooks, geometry boxes, school bags, and learning kits.
-                </p>
-              </div>
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 space-y-4 hover:shadow-md transition-all">
+            <div className="flex justify-between items-start">
+              <span className="text-3xl">🎒</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">High Demand</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-base text-slate-900">Bags & Accessories</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Backpacks, luggage bags, belts, hats, and warm blankets or bedding materials.
+              </p>
             </div>
           </div>
 
           {/* Card 4 */}
-          <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-md transition-all flex flex-col justify-between">
-            <div className="p-6 space-y-4">
-              <span className="text-3xl">🛏️</span>
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Furniture & Household</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Beds, mattresses, cupboards, learning tables, chairs, and kitchen utensils in robust condition.
-                </p>
-              </div>
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 space-y-4 hover:shadow-md transition-all">
+            <span className="text-3xl">🌾</span>
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-base text-slate-900">Food Provisions</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Rice, beans, cooking oil, salt, pasta, canned provisions, and non-perishable groceries.
+              </p>
             </div>
           </div>
 
           {/* Card 5 */}
-          <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-md transition-all flex flex-col justify-between">
-            <div className="p-6 space-y-4">
-              <span className="text-3xl">💊</span>
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Medical Supplies</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Complete first aid kits, simple disinfectants, bandages, thermometers, and basic over-the-counter medicines.
-                </p>
-              </div>
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 space-y-4 hover:shadow-md transition-all">
+            <span className="text-3xl">🛏️</span>
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-base text-slate-900">Household & Furniture</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Study desks, chairs, bed frames, mattresses, storage boxes, and kitchen utensils.
+              </p>
             </div>
           </div>
 
           {/* Card 6 */}
-          <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-md transition-all flex flex-col justify-between">
-            <div className="p-6 space-y-4">
-              <span className="text-3xl">💻</span>
-              <div className="space-y-1">
-                <h3 className="font-display font-bold text-base text-slate-900">Electronics & Office</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Functional desktop/laptop computers, tablets, printers, and UPS backups for administrative and program use.
-                </p>
-              </div>
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 space-y-4 hover:shadow-md transition-all">
+            <span className="text-3xl">🧸</span>
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-base text-slate-900">Toys & Games</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Board games, footballs, sports equipment, puzzles, and recreational play materials.
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 4. WHAT WE CAN'T ACCEPT */}
-      <div className="bg-rose-50/40 border border-rose-100 rounded-3xl p-8 sm:p-10 space-y-6">
+      {/* 4. WHAT NOT TO DONATE */}
+      <div className="bg-rose-50/50 border border-rose-100 rounded-3xl p-8 sm:p-10 space-y-6">
         <div className="space-y-1">
           <h2 className="font-display font-extrabold text-2xl text-slate-900 flex items-center gap-2">
-            <span className="text-rose-500">⚠️</span> A Few Things We Can't Accept
+            <span className="text-rose-500">⚠️</span> What Not to Donate
           </h2>
           <p className="text-sm text-gray-500">
-            To make sure every donation is immediately usable and respect our recipient teams, please avoid these:
+            To ensure every item given is safe, dignified, and immediately helpful, please avoid the following:
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-medium text-gray-600">
-          <div className="flex items-start gap-3 bg-white p-4 rounded-xl border border-rose-100/50">
-            <span className="text-rose-500 font-bold">✕</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-medium text-gray-700">
+          <div className="flex items-start gap-3 bg-white p-4.5 rounded-2xl border border-rose-100 shadow-2xs">
+            <span className="text-rose-500 font-black text-sm shrink-0">✕</span>
             <span>Items that are broken, heavily worn, stained, torn, or expired.</span>
           </div>
-          <div className="flex items-start gap-3 bg-white p-4 rounded-xl border border-rose-100/50">
-            <span className="text-rose-500 font-bold">✕</span>
-            <span>Perishable food items without sealed vacuum packaging or proper shelf dates.</span>
+          <div className="flex items-start gap-3 bg-white p-4.5 rounded-2xl border border-rose-100 shadow-2xs">
+            <span className="text-rose-500 font-black text-sm shrink-0">✕</span>
+            <span>Spoiled or not fresh perishable good items.</span>
           </div>
-          <div className="flex items-start gap-3 bg-white p-4 rounded-xl border border-rose-100/50">
-            <span className="text-rose-500 font-bold">✕</span>
+          <div className="flex items-start gap-3 bg-white p-4.5 rounded-2xl border border-rose-100 shadow-2xs">
+            <span className="text-rose-500 font-black text-sm shrink-0">✕</span>
             <span>Used undergarments, sleepwear, or intimate clothing apparel.</span>
           </div>
-          <div className="flex items-start gap-3 bg-white p-4 rounded-xl border border-rose-100/50">
-            <span className="text-rose-500 font-bold">✕</span>
-            <span>Any appliances, devices, or assets requiring repair or spare parts before operation.</span>
+          <div className="flex items-start gap-3 bg-white p-4.5 rounded-2xl border border-rose-100 shadow-2xs">
+            <span className="text-rose-500 font-black text-sm shrink-0">✕</span>
+            <span>Any appliances, devices, or assets requiring heavy repair or expensive spare parts before operation.</span>
           </div>
         </div>
       </div>
 
-      {/* 5. HOW IT WORKS */}
-      <div className="space-y-10">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">
-            Donating Is Simple
-          </h2>
-          <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
-            Our simplified logistical loop ensures your materials arrive with dignity.
+      {/* 5. DONATE NOW CALL-TO-ACTION CARD */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 border border-emerald-500/30 rounded-3xl p-8 sm:p-10 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-[#00C853]/20 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="space-y-3 relative z-10 text-center md:text-left max-w-xl">
+          <div className="inline-flex items-center gap-1.5 bg-[#00C853]/20 border border-[#00C853]/40 px-3 py-1 rounded-full text-xs font-bold text-[#00E676]">
+            <span>💚 READY TO MAKE A DIFFERENCE?</span>
+          </div>
+          <h3 className="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">
+            Have Items Ready to Donate?
+          </h3>
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+            Filter our directory of verified Cameroonian orphanages by category or city, select a center near you, and connect directly with their coordinators.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-          {/* Step 1 */}
-          <div className="bg-slate-50 border border-slate-100 p-8 rounded-3xl space-y-3 flex flex-col items-start relative hover:border-emerald-200 transition-all">
-            <span className="text-xs font-mono font-bold text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3 py-1 rounded-full">
-              STEP 1
-            </span>
-            <h3 className="font-display font-bold text-lg text-slate-900">Choose What to Give</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Check our live current needs list or pick from the authorized categories above to match demands.
-            </p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="bg-slate-50 border border-slate-100 p-8 rounded-3xl space-y-3 flex flex-col items-start relative hover:border-emerald-200 transition-all">
-            <span className="text-xs font-mono font-bold text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3 py-1 rounded-full">
-              STEP 2
-            </span>
-            <h3 className="font-display font-bold text-lg text-slate-900">Drop Off or Request</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Bring items to our Limbe hub point, or request a localized home pickup if transit weight is a challenge.
-            </p>
-          </div>
-
-          {/* Step 3 */}
-          <div className="bg-slate-50 border border-slate-100 p-8 rounded-3xl space-y-3 flex flex-col items-start relative hover:border-emerald-200 transition-all">
-            <span className="text-xs font-mono font-bold text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3 py-1 rounded-full">
-              STEP 3
-            </span>
-            <h3 className="font-display font-bold text-lg text-slate-900">We Deliver It</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Your donation goes directly to the program or center that needs it — zero middlemen, zero storage delays.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 6. DROP-OFF & LOGISTICS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white border border-gray-100 rounded-3xl p-8 space-y-5 flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-[#00C853]">
-              <MapPin className="w-5 h-5" />
-            </div>
-            <h3 className="font-display font-bold text-xl text-slate-900">Where to Drop Off</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              You can drop off your donation at our central sorting facility at any time during our active weekly schedule.
-            </p>
-          </div>
-
-          <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 space-y-1">
-            <h4 className="font-display font-bold text-xs text-slate-900 uppercase tracking-wide">DoNest Central Office</h4>
-            <p className="text-xs text-gray-600 font-bold">Mile 18, Buea Road, Limbe, Cameroon</p>
-            <p className="text-[11px] text-gray-500">Open Monday to Friday: 9:00 AM — 5:00 PM</p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-gray-100 rounded-3xl p-8 space-y-5 flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
-              <Gift className="w-5 h-5" />
-            </div>
-            <h3 className="font-display font-bold text-xl text-slate-900">Pickup Services</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Can't make it to a drop-off point? We offer free coordinated pickups for larger quantities, boxes of clothing, or furniture items.
-            </p>
-          </div>
-
-          <div className="bg-blue-50/30 p-5 rounded-2xl border border-blue-50 space-y-2">
-            <h4 className="font-display font-bold text-xs text-blue-900 uppercase tracking-wide">Request Coordination</h4>
-            <p className="text-[11px] text-blue-700 leading-normal">
-              Submit the pickup coordination request form below, and our transit team will reach out to schedule a date.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 7. CONTACT / CTA FORM */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 sm:p-12 text-white overflow-hidden relative">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -z-0 pointer-events-none" />
-        <div className="absolute left-0 bottom-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -z-0 pointer-events-none" />
-
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Info Side */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 px-3 py-1.5 rounded-full text-xs font-black text-emerald-300 tracking-wide uppercase">
-              <Mail className="w-3.5 h-3.5" />
-              <span>DIRECT CONTACT</span>
-            </div>
-
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white leading-tight">
-              Ready to Donate?
-            </h2>
-
-            <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-              Have items to give or questions about what we accept? Reach out directly. Click the link below to launch a mail message instantly.
-            </p>
-
-            <div className="pt-2">
-              <a 
-                href="mailto:donate@dodonate.org"
-                className="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-black text-xs sm:text-sm px-6 py-4 rounded-xl transition-all shadow-md shadow-emerald-500/10 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer inline-flex items-center gap-2"
-              >
-                donate@dodonate.org
-              </a>
-            </div>
-          </div>
-
-          {/* Form Side */}
-          <div className="lg:col-span-7">
-            {formSubmitted ? (
-              <div className="bg-slate-950/50 border border-emerald-500/40 p-8 rounded-3xl text-center space-y-4 backdrop-blur-md animate-fade-in">
-                <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                  <Check className="w-6 h-6" />
-                </div>
-                <h3 className="font-display font-black text-xl text-white">Pickup Request Logged!</h3>
-                <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-                  Thank you! Our operations coordinator will contact you via email or phone within 24 to 48 hours to confirm drop-off validation or schedule the pickup.
-                </p>
-                <div className="pt-2">
-                  <button 
-                    onClick={() => setFormSubmitted(false)} 
-                    className="text-xs text-emerald-400 hover:text-emerald-300 underline underline-offset-4 cursor-pointer font-bold"
-                  >
-                    Submit another request
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handlePickupSubmit} className="bg-slate-950/40 border border-slate-800 p-6 sm:p-8 rounded-3xl space-y-4 backdrop-blur-md">
-                <h3 className="font-display font-extrabold text-sm text-slate-200 uppercase tracking-wide">Pickup Coordination Request</h3>
-                
-                {/* Full name */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Full Name</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="Enter your full name" 
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs sm:text-sm focus:outline-hidden focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all placeholder:text-slate-600"
-                  />
-                </div>
-
-                {/* Contact (Email/Phone) */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Phone or Email</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="Enter email or phone number" 
-                    value={contactInfo}
-                    onChange={(e) => setContactInfo(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs sm:text-sm focus:outline-hidden focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all placeholder:text-slate-600"
-                  />
-                </div>
-
-                {/* Items Description */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Items to Donate</label>
-                  <textarea 
-                    rows={2}
-                    required
-                    placeholder="What items do you plan to donate? (e.g. 2 boxes of children shirts, school notebooks)" 
-                    value={itemsToDonate}
-                    onChange={(e) => setItemsToDonate(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs focus:outline-hidden focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all placeholder:text-slate-600 resize-none"
-                  />
-                </div>
-
-                {/* Preferred date */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">Preferred Pickup Date</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Saturday Morning, July 25th" 
-                    value={pickupDate}
-                    onChange={(e) => setPickupDate(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs sm:text-sm focus:outline-hidden focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all placeholder:text-slate-600"
-                  />
-                </div>
-
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-black text-sm sm:text-base py-4 rounded-xl shadow-lg shadow-emerald-500/15 hover:shadow-emerald-500/25 transition-all text-center inline-block cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Sending Request...' : 'Request Collection'}
-                </button>
-
-                <p className="text-[10px] text-slate-500 text-center">
-                  We typically respond within 24–48 hours to confirm drop-off or pickup details.
-                </p>
-              </form>
-            )}
-          </div>
+        <div className="relative z-10 shrink-0 w-full md:w-auto">
+          <button
+            onClick={handleFilterClick}
+            className="w-full md:w-auto bg-[#00C853] hover:bg-[#00E676] active:bg-[#00C853] text-slate-950 font-black text-sm sm:text-base px-8 py-4 rounded-2xl shadow-lg shadow-[#00C853]/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+          >
+            Donate Now
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>
