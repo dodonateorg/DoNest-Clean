@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 
-export default function SearchHero() {
-  const [isFrench, setIsFrench] = useState(true);
+interface SearchHeroProps {
+  lang?: 'EN' | 'FR';
+}
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsFrench(prev => !prev);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
+export default function SearchHero({ lang = 'EN' }: SearchHeroProps) {
+  const isFrench = lang === 'FR';
 
   return (
     <div className="flex flex-col items-center text-center space-y-6 pt-6 pb-10">
@@ -101,20 +98,34 @@ export default function SearchHero() {
       {/* Sparkle Pill Badge with reduced height */}
       <div className="inline-flex items-center gap-1.5 bg-[#00C853]/10 border border-[#00C853]/20 px-3.5 py-1 rounded-full text-xs font-extrabold text-[#00C853] tracking-wide shadow-xs">
         <Sparkles className="w-3.5 h-3.5 text-[#00C853] animate-pulse" />
-        <span>Don't Waste It, Donate It!</span>
+        <span>{isFrench ? 'Ne jetez plus, donnez !' : "Don't Waste It, Donate It!"}</span>
       </div>
 
       {/* Hero Headline and subtitle */}
       <div className="max-w-2xl mx-auto space-y-3">
         <h1 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-[#0A1120] leading-[1.1] tracking-tight">
-          Turn Your <span className="bg-[#FFE600] px-2 rounded-xl text-black">Extra Items</span> Into{' '}
-          <span className="text-[#00C853] relative inline-block">
-            Local Impact
-            <span className="absolute bottom-1 left-0 w-full h-2 bg-[#00C853]/15 -z-10 rounded-sm"></span>
-          </span>
+          {isFrench ? (
+            <>
+              Transformez vos <span className="bg-[#FFE600] px-2 rounded-xl text-black">objets utiles</span> en{' '}
+              <span className="text-[#00C853] relative inline-block">
+                impact local
+                <span className="absolute bottom-1 left-0 w-full h-2 bg-[#00C853]/15 -z-10 rounded-sm"></span>
+              </span>
+            </>
+          ) : (
+            <>
+              Turn Your <span className="bg-[#FFE600] px-2 rounded-xl text-black">Extra Items</span> Into{' '}
+              <span className="text-[#00C853] relative inline-block">
+                Local Impact
+                <span className="absolute bottom-1 left-0 w-full h-2 bg-[#00C853]/15 -z-10 rounded-sm"></span>
+              </span>
+            </>
+          )}
         </h1>
         <p className="text-gray-500 font-medium text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
-          DoNest connects nonprofits with generous citizens, making it easy to donate essential items, volunteer your time, and support causes that strengthen communities.
+          {isFrench
+            ? 'DoNest connecte les associations et orphelinats aux citoyens généreux. Donnez vos articles essentiels, devenez bénévole et soutenez des causes locales.'
+            : 'DoNest connects nonprofits with generous citizens, making it easy to donate essential items, volunteer your time, and support causes that strengthen communities.'}
         </p>
       </div>
 

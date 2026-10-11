@@ -43,7 +43,8 @@ import {
   Music,
   Youtube,
   Package,
-  Calendar
+  Calendar,
+  BellRing
 } from 'lucide-react';
 import { 
   DonationsPage, 
@@ -259,6 +260,12 @@ export default function App() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Stay Connected modal states (CRM lead capture)
+  const [isStayConnectedOpen, setIsStayConnectedOpen] = useState(false);
+  const [stayConnectedForm, setStayConnectedForm] = useState({ name: '', email: '', phone: '' });
+  const [stayConnectedStatus, setStayConnectedStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [stayConnectedError, setStayConnectedError] = useState('');
+
   // Active tab on the NGO profile detail page (Section A vs Section B)
   const [activeProfileTab, setActiveProfileTab] = useState<'needs' | 'volunteer'>('needs');
 
@@ -266,7 +273,25 @@ export default function App() {
   const [committedDonationInputs, setCommittedDonationInputs] = useState<{ [needId: string]: number }>({});
   
   // App languages ("EN" or "FR" representing bilingual Cameroon)
-  const [lang, setLang] = useState<'EN' | 'FR'>('EN');
+  const [lang, setLang] = useState<'EN' | 'FR'>(() => {
+    try {
+      const saved = localStorage.getItem('donest_lang');
+      if (saved === 'EN' || saved === 'FR') return saved;
+      // Auto-detect browser language
+      const browserLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
+      if (browserLang.startsWith('fr')) return 'FR';
+    } catch (e) {
+      // Fallback
+    }
+    return 'EN';
+  });
+
+  const changeLanguage = (newLang: 'EN' | 'FR') => {
+    setLang(newLang);
+    try {
+      localStorage.setItem('donest_lang', newLang);
+    } catch (e) {}
+  };
 
   const [supabaseConfig, setSupabaseConfig] = useState<{ enabled: boolean; url: string; key: string } | null>(null);
 
@@ -846,6 +871,62 @@ export default function App() {
     }
   };
 
+  // Stay Connected handlers (CRM Lead Capture)
+  const handleOpenStayConnected = () => {
+    setIsStayConnectedOpen(true);
+    setStayConnectedStatus('idle');
+    setStayConnectedError('');
+    setStayConnectedForm({ name: '', email: '', phone: '' });
+  };
+
+  const handleCloseStayConnected = () => {
+    setIsStayConnectedOpen(false);
+    setStayConnectedStatus('idle');
+    setStayConnectedError('');
+  };
+
+  const handleStayConnectedSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeNgo) return;
+    if (!stayConnectedForm.name.trim()) {
+      setStayConnectedError(lang === 'EN' ? 'Please enter your full name.' : 'Veuillez entrer votre nom complet.');
+      return;
+    }
+    if (!stayConnectedForm.phone.trim()) {
+      setStayConnectedError(lang === 'EN' ? 'Please enter your phone number.' : 'Veuillez entrer votre numéro de téléphone.');
+      return;
+    }
+
+    setStayConnectedStatus('submitting');
+    setStayConnectedError('');
+
+    try {
+      const res = await fetch('/api/crm/stay-connected', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ngo_id: activeNgo.id || activeNgo.username,
+          ngo_slug: activeNgo.custom_slug || activeNgo.username,
+          ngo_name: activeNgo.name,
+          full_name: stayConnectedForm.name.trim(),
+          email: stayConnectedForm.email.trim(),
+          phone: stayConnectedForm.phone.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok && data?.error) {
+        throw new Error(data.error);
+      }
+
+      setStayConnectedStatus('success');
+    } catch (err: any) {
+      console.error('Stay connected submission error:', err);
+      setStayConnectedError(err.message || 'Something went wrong. Please try again.');
+      setStayConnectedStatus('error');
+    }
+  };
+
   // 2. Physical Checklist Interactive Donations (Section A)
   const handleCommitPhysicalDonation = (ngoUsername: string, needId: string) => {
     const qtyToDonate = committedDonationInputs[needId] || 1;
@@ -994,12 +1075,40 @@ export default function App() {
             <Logo />
           </div>
 
-          {/* Action buttons: Menu Hamburger */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          {/* Action buttons: Language Toggle and Menu Hamburger */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Bilingual Language Toggle (EN / FR) */}
+            <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-3xs">
+              <button
+                type="button"
+                onClick={() => changeLanguage('EN')}
+                className={`px-2.5 py-1 text-xs font-black rounded-lg transition-all cursor-pointer ${
+                  lang === 'EN'
+                    ? 'bg-[#00C853] text-white shadow-2xs'
+                    : 'text-gray-500 hover:text-brand-dark hover:bg-gray-50'
+                }`}
+                title="Switch to English"
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => changeLanguage('FR')}
+                className={`px-2.5 py-1 text-xs font-black rounded-lg transition-all cursor-pointer ${
+                  lang === 'FR'
+                    ? 'bg-[#00C853] text-white shadow-2xs'
+                    : 'text-gray-500 hover:text-brand-dark hover:bg-gray-50'
+                }`}
+                title="Passer en Français"
+              >
+                FR
+              </button>
+            </div>
+
             <button
               ref={toggleBtnRef}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2.5 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200 flex items-center justify-center"
+              className="p-2.5 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200 flex items-center justify-center cursor-pointer"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? <X className="w-5 h-5 text-brand-dark" /> : <Menu className="w-5 h-5 text-brand-dark" />}
@@ -1028,7 +1137,7 @@ export default function App() {
                 <Gift className="w-3.5 h-3.5" />
               </div>
               <span className="font-display font-extrabold text-xs text-rose-600 uppercase tracking-wide flex-1">
-                Tip Us
+                {lang === 'EN' ? 'Tip Us' : 'Nous Soutenir'}
               </span>
               <span className="text-[9px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide font-mono">
                 dodonate.org/tip
@@ -1045,13 +1154,13 @@ export default function App() {
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }, 200);
               }}
-              className="flex items-center gap-3 w-full bg-amber-50/40 hover:bg-amber-50 border border-amber-100 px-4 py-2 rounded-2xl transition-all text-left"
+              className="flex items-center gap-3 w-full bg-amber-50/40 hover:bg-amber-50 border border-amber-100 px-4 py-2 rounded-2xl transition-all text-left cursor-pointer"
             >
               <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
                 <Search className="w-3.5 h-3.5" />
               </div>
               <span className="font-display font-extrabold text-xs text-amber-700 uppercase tracking-wide">
-                Search Orphanages
+                {lang === 'EN' ? 'Search Orphanages' : 'Rechercher des Orphelinats'}
               </span>
             </button>
 
@@ -1066,7 +1175,7 @@ export default function App() {
                     setIsCompanyOpen(false);
                   }
                 }}
-                className={`flex items-center justify-between w-full p-4 transition-colors ${
+                className={`flex items-center justify-between w-full p-4 transition-colors cursor-pointer ${
                   currentHash.startsWith('solutions/') 
                     ? 'bg-[#00C853]/5 text-[#00C853] font-bold border-l-4 border-[#00C853]' 
                     : 'hover:bg-slate-50 text-brand-dark'
@@ -1074,7 +1183,9 @@ export default function App() {
               >
                 <div className="flex items-center gap-3">
                   <LayoutGrid className={`w-4 h-4 ${currentHash.startsWith('solutions/') ? 'text-[#00C853]' : 'text-gray-500'}`} />
-                  <span className="font-display font-bold text-sm">Solutions</span>
+                  <span className="font-display font-bold text-sm">
+                    {lang === 'EN' ? 'Solutions' : 'Solutions'}
+                  </span>
                 </div>
                 {isSolutionsOpen ? (
                   <ChevronUp className={`w-4 h-4 ${currentHash.startsWith('solutions/') ? 'text-[#00C853]' : 'text-gray-400'}`} />
@@ -1095,7 +1206,7 @@ export default function App() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'solutions/donations' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>Donations</span>
+                    <span>{lang === 'EN' ? 'Donations' : 'Dons Matériels'}</span>
                   </a>
                   <a 
                     href="/solution/volunteer-network"
@@ -1107,16 +1218,18 @@ export default function App() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'solutions/volunteer-network' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>Volunteer Hub</span>
+                    <span>{lang === 'EN' ? 'Volunteer Hub' : 'Hub de Bénévolat'}</span>
                   </a>
                   <div 
                     className="flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-gray-400 bg-slate-50/50 opacity-40 cursor-not-allowed select-none pointer-events-none"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                      <span>CSR For Companies</span>
+                      <span>{lang === 'EN' ? 'CSR For Companies' : 'RSE pour Entreprises'}</span>
                     </div>
-                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Coming Soon</span>
+                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                      {lang === 'EN' ? 'Coming Soon' : 'Bientôt'}
+                    </span>
                   </div>
                 </div>
               )}
@@ -1133,7 +1246,7 @@ export default function App() {
                     setIsCompanyOpen(false);
                   }
                 }}
-                className={`flex items-center justify-between w-full p-4 transition-colors ${
+                className={`flex items-center justify-between w-full p-4 transition-colors cursor-pointer ${
                   currentHash.startsWith('usecases/') 
                     ? 'bg-[#00C853]/5 text-[#00C853] font-bold border-l-4 border-[#00C853]' 
                     : 'hover:bg-slate-50 text-brand-dark'
@@ -1141,7 +1254,9 @@ export default function App() {
               >
                 <div className="flex items-center gap-3">
                   <Users className={`w-4 h-4 ${currentHash.startsWith('usecases/') ? 'text-[#00C853]' : 'text-gray-500'}`} />
-                  <span className="font-display font-bold text-sm">Use Cases</span>
+                  <span className="font-display font-bold text-sm">
+                    {lang === 'EN' ? 'Use Cases' : 'Cas d\'usage'}
+                  </span>
                 </div>
                 {isUseCasesOpen ? (
                   <ChevronUp className={`w-4 h-4 ${currentHash.startsWith('usecases/') ? 'text-[#00C853]' : 'text-gray-400'}`} />
@@ -1162,7 +1277,7 @@ export default function App() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'usecases/for-ngos' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>For NGOs</span>
+                    <span>{lang === 'EN' ? 'For NGOs' : 'Pour les ONG'}</span>
                   </a>
                   <a 
                     href="/usecase/for-donors"
@@ -1174,7 +1289,7 @@ export default function App() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'usecases/for-donors' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>For Donors</span>
+                    <span>{lang === 'EN' ? 'For Donors' : 'Pour les Donateurs'}</span>
                   </a>
                   <a 
                     href="/usecase/for-companies"
@@ -1186,7 +1301,7 @@ export default function App() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'usecases/for-companies' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>For Companies</span>
+                    <span>{lang === 'EN' ? 'For Companies' : 'Pour les Entreprises'}</span>
                   </a>
                 </div>
               )}
@@ -1203,7 +1318,7 @@ export default function App() {
                     setIsUseCasesOpen(false);
                   }
                 }}
-                className={`flex items-center justify-between w-full p-4 transition-colors ${
+                className={`flex items-center justify-between w-full p-4 transition-colors cursor-pointer ${
                   currentHash.startsWith('company/') 
                     ? 'bg-[#00C853]/5 text-[#00C853] font-bold border-l-4 border-[#00C853]' 
                     : 'hover:bg-slate-50 text-brand-dark'
@@ -1211,7 +1326,9 @@ export default function App() {
               >
                 <div className="flex items-center gap-3">
                   <Building2 className={`w-4 h-4 ${currentHash.startsWith('company/') ? 'text-[#00C853]' : 'text-gray-500'}`} />
-                  <span className="font-display font-bold text-sm">Company</span>
+                  <span className="font-display font-bold text-sm">
+                    {lang === 'EN' ? 'Company' : 'Entreprise'}
+                  </span>
                 </div>
                 {isCompanyOpen ? (
                   <ChevronUp className={`w-4 h-4 ${currentHash.startsWith('company/') ? 'text-[#00C853]' : 'text-gray-400'}`} />
@@ -1232,16 +1349,18 @@ export default function App() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'company/about-us' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>About Us</span>
+                    <span>{lang === 'EN' ? 'About Us' : 'À Propos'}</span>
                   </a>
                   <div 
                     className="flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-gray-400 bg-slate-50/50 opacity-40 cursor-not-allowed select-none pointer-events-none"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                      <span>Impact Stories</span>
+                      <span>{lang === 'EN' ? 'Impact Stories' : 'Témoignages'}</span>
                     </div>
-                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Coming Soon</span>
+                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                      {lang === 'EN' ? 'Coming Soon' : 'Bientôt'}
+                    </span>
                   </div>
                   <a 
                     href="/contact-us"
@@ -1253,7 +1372,7 @@ export default function App() {
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${currentHash === 'company/contact-us' ? 'bg-[#00C853]' : 'bg-gray-300'}`}></span>
-                    <span>Contact Us</span>
+                    <span>{lang === 'EN' ? 'Contact Us' : 'Contactez-nous'}</span>
                   </a>
                 </div>
               )}
@@ -1269,7 +1388,7 @@ export default function App() {
                 className="w-full relative group overflow-hidden bg-[#00C853] hover:bg-[#00b04a] text-white py-3.5 rounded-full text-center text-sm font-black transition-all hover:scale-[1.02] active:scale-[0.98] duration-300 shadow-md flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-white animate-pulse" />
-                <span>List Organization</span>
+                <span>{lang === 'EN' ? 'List Organization' : 'Inscrire votre ONG'}</span>
               </a>
             </div>
 
@@ -1285,7 +1404,7 @@ export default function App() {
           <div className="space-y-8 animate-fade-in">
             
             {/* Search Hero component */}
-            <SearchHero />
+            <SearchHero lang={lang} />
 
             {/* Unified Information & Action Segment with tighter layout gaps */}
             <div className="space-y-4">
@@ -1617,6 +1736,7 @@ export default function App() {
             {currentHash === 'solutions/donations' && (
               <DonationsPage 
                 onBack={() => navigate('')} 
+                lang={lang}
                 onGoToFilter={() => {
                   navigate('');
                   setTimeout(() => {
@@ -1668,7 +1788,7 @@ export default function App() {
               </button>
               
               <a
-                href={`https://dodonate.org/${activeNgo.username}`}
+                href={`https://dodonate.org/donate/${activeNgo.custom_slug || activeNgo.username}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-[#00C853] hover:bg-[#009624] text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-xs hover:shadow-md transition-all active:scale-95 uppercase tracking-wider"
@@ -1727,14 +1847,14 @@ export default function App() {
                     <span>Contact via WhatsApp</span>
                   </a>
 
-                  {/* [📞 Call Direct] (Direct anchor using tel: parameters) */}
-                  <a
-                    href={`tel:${activeNgo.phone}`}
-                    className="flex items-center justify-center gap-2 bg-brand-dark hover:bg-brand-dark/95 text-white font-extrabold text-sm px-5 py-3 rounded-2xl shadow-xs hover:shadow-md transform hover:-translate-y-0.5 transition-all text-center"
+                  {/* [🔔 Stay Connected] (Replaces Call Direct: opens popup form for CRM lead capture) */}
+                  <button
+                    onClick={handleOpenStayConnected}
+                    className="flex items-center justify-center gap-2 bg-brand-dark hover:bg-brand-dark/95 text-white font-extrabold text-sm px-5 py-3 rounded-2xl shadow-xs hover:shadow-md transform hover:-translate-y-0.5 transition-all text-center cursor-pointer group"
                   >
-                    <Phone className="w-4 h-4 text-brand-yellow fill-brand-yellow" />
-                    <span>Call Direct</span>
-                  </a>
+                    <BellRing className="w-4 h-4 text-brand-yellow group-hover:rotate-12 transition-transform" />
+                    <span>Stay Connected</span>
+                  </button>
 
                   {/* [🌐 Visit Website] */}
                   {activeNgo.website && (
@@ -1866,7 +1986,7 @@ export default function App() {
                           {/* Donate Item Button - opens WhatsApp */}
                           <a
                             href={`https://wa.me/${activeNgo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                              `Hello ${activeNgo.name}, I would like to support your orphanage by delivering "${need.item}" (${need.category}). Description: "${need.details || ''}"`
+                              `Hello ${activeNgo.name}, I would like to support your orphanage by delivering "${need.item}" (${need.category}).`
                             )}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -2177,6 +2297,184 @@ export default function App() {
                 </form>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 🔔 Stay Connected Modal (CRM Lead Capture & Deduplication Flow) */}
+      {isStayConnectedOpen && activeNgo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-100 relative max-h-[90vh] overflow-y-auto space-y-6">
+            
+            {/* Close Button */}
+            <button 
+              onClick={handleCloseStayConnected}
+              className="absolute top-4 right-4 bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-800 p-2 rounded-full transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* SCREEN 1: SUCCESS MODAL */}
+            {stayConnectedStatus === 'success' ? (
+              <div className="py-4 text-center space-y-6 animate-scale-up">
+                <div className="w-16 h-16 bg-gradient-to-tr from-[#00C853] to-emerald-400 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-[#00C853]/25">
+                  <Check className="w-8 h-8 stroke-[3]" />
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-display font-black text-2xl text-[#0B1527]">
+                    {lang === 'EN' ? "You're Connected!" : "Vous êtes connecté !"}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 max-w-xs mx-auto leading-relaxed">
+                    {lang === 'EN' ? (
+                      <>Thank you, <strong className="text-[#0B1527]">{stayConnectedForm.name}</strong>! You will now receive timely updates and urgent alerts from <strong className="text-[#00C853]">{activeNgo.name}</strong>.</>
+                    ) : (
+                      <>Merci, <strong className="text-[#0B1527]">{stayConnectedForm.name}</strong> ! Vous recevrez des alertes urgentes et des nouvelles de <strong className="text-[#00C853]">{activeNgo.name}</strong>.</>
+                    )}
+                  </p>
+                </div>
+
+                {/* Stylish Impact Donation Box */}
+                <div className="bg-gradient-to-br from-emerald-50 via-green-50/60 to-amber-50/70 border border-emerald-100 rounded-2xl p-5 space-y-3.5 shadow-xs text-center">
+                  <p className="text-xs sm:text-sm font-bold text-gray-700 leading-snug">
+                    {lang === 'EN' ? (
+                      <>Create more impact by donating to <span className="text-[#00C853] font-black">{activeNgo.name}</span> today.</>
+                    ) : (
+                      <>Créez plus d'impact en faisant un don à <span className="text-[#00C853] font-black">{activeNgo.name}</span> aujourd'hui.</>
+                    )}
+                  </p>
+                  
+                  <a
+                    href={`https://dodonate.org/donate/${activeNgo.custom_slug || activeNgo.username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-[#00C853] hover:bg-[#009624] text-white font-display font-black text-sm px-6 py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-wider"
+                  >
+                    <Heart className="w-4 h-4 fill-white text-[#00C853]" />
+                    <span>{lang === 'EN' ? 'Donate Now' : 'Faire un don'}</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  </a>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={handleCloseStayConnected}
+                    className="w-full text-xs font-bold text-gray-400 hover:text-gray-700 transition-colors py-2 cursor-pointer"
+                  >
+                    {lang === 'EN' ? 'Close' : 'Fermer'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* SCREEN 2: POP-UP FORM */
+              <div className="space-y-5 animate-fade-in">
+                {/* Header with Orphanage Branding */}
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-[#0B1527] flex items-center justify-center text-xl shrink-0">
+                    <BellRing className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-black text-lg sm:text-xl text-[#0B1527] leading-tight">
+                      {lang === 'EN' ? 'Stay Connected' : 'Restez Connecté'}
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium truncate max-w-[260px]">
+                      {activeNgo.name}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  {lang === 'EN'
+                    ? `Leave your details to receive weekly alerts about urgent physical needs and impact updates from ${activeNgo.name}.`
+                    : `Laissez vos coordonnées pour recevoir des alertes sur les besoins urgents et l'impact de ${activeNgo.name}.`}
+                </p>
+
+                {stayConnectedError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-medium">
+                    ⚠️ {stayConnectedError}
+                  </div>
+                )}
+
+                <form onSubmit={handleStayConnectedSubmit} className="space-y-4">
+                  {/* Full Name */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-gray-500 flex items-center justify-between">
+                      <span>{lang === 'EN' ? 'Full Name' : 'Nom Complet'}</span>
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={stayConnectedForm.name}
+                      onChange={(e) => setStayConnectedForm({ ...stayConnectedForm, name: e.target.value })}
+                      placeholder={lang === 'EN' ? 'e.g. Marie Claire' : 'ex. Marie Claire'}
+                      className="w-full bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-4 py-3 text-xs font-medium focus:outline-none text-[#0A1120] transition-colors"
+                    />
+                  </div>
+
+                  {/* Phone Number */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-gray-500 flex items-center justify-between">
+                      <span>{lang === 'EN' ? 'Phone Number' : 'Numéro de Téléphone'}</span>
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={stayConnectedForm.phone}
+                      onChange={(e) => setStayConnectedForm({ ...stayConnectedForm, phone: e.target.value })}
+                      placeholder="e.g. +237 677 123 456"
+                      className="w-full bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-4 py-3 text-xs font-medium focus:outline-none text-[#0A1120] transition-colors"
+                    />
+                  </div>
+
+                  {/* Email (Optional) */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                      <span>{lang === 'EN' ? 'Email Address' : 'Adresse Email'}</span>
+                      <span className="text-[9px] text-gray-400 font-normal lowercase">(optional)</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={stayConnectedForm.email}
+                      onChange={(e) => setStayConnectedForm({ ...stayConnectedForm, email: e.target.value })}
+                      placeholder="e.g. marie@gmail.com"
+                      className="w-full bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-4 py-3 text-xs font-medium focus:outline-none text-[#0A1120] transition-colors"
+                    />
+                  </div>
+
+                  {/* Form Actions */}
+                  <div className="flex items-center gap-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleCloseStayConnected}
+                      className="px-4 py-3 border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      {lang === 'EN' ? 'Cancel' : 'Annuler'}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={stayConnectedStatus === 'submitting'}
+                      className="flex-1 bg-[#00C853] hover:bg-[#009624] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xs hover:shadow-md cursor-pointer text-center flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {stayConnectedStatus === 'submitting' ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>{lang === 'EN' ? 'Connecting...' : 'Connexion...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <BellRing className="w-4 h-4" />
+                          <span>{lang === 'EN' ? 'Stay Connected' : 'Restez Connecté'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
           </div>
         </div>
       )}

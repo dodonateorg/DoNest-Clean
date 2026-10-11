@@ -52,9 +52,11 @@ interface VolunteerNetworkProps {
 interface DonationsPageProps {
   onBack: () => void;
   onGoToFilter?: () => void;
+  lang?: string;
 }
 
-export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
+export function DonationsPage({ onBack, onGoToFilter, lang = 'EN' }: DonationsPageProps) {
+  const isFrench = lang === 'FR';
   const scrollToSection = (id: string) => {
     const elem = document.getElementById(id);
     if (elem) {
@@ -82,7 +84,7 @@ export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
           className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:border-brand-dark px-4 py-2 rounded-2xl text-xs font-bold transition-all hover:-translate-x-1 duration-300 shadow-2xs cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
-          Back to Directory
+          {isFrench ? 'Retour au Répertoire' : 'Back to Directory'}
         </button>
       </div>
 
@@ -101,16 +103,27 @@ export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
         <div className="relative z-10 px-8 py-16 sm:px-12 sm:py-20 max-w-4xl space-y-6">
           <div className="inline-flex items-center gap-1.5 bg-[#00C853]/20 border border-[#00C853]/40 px-3 py-1.5 rounded-full text-xs font-extrabold text-[#00E676] tracking-wide backdrop-blur-xs">
             <Heart className="w-4 h-4 text-[#00E676]" />
-            <span>DIRECT ITEM DONATIONS</span>
+            <span>{isFrench ? 'DONS MATÉRIELS DIRECTS' : 'DIRECT ITEM DONATIONS'}</span>
           </div>
 
           <h1 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white leading-tight tracking-tight">
-            Don't Waste Useful Items.<br />
-            <span className="text-[#00E676]">Donate Them.</span>
+            {isFrench ? (
+              <>
+                Ne Jetez Plus Vos Objets.<br />
+                <span className="text-[#00E676]">Donnez-les.</span>
+              </>
+            ) : (
+              <>
+                Don't Waste Useful Items.<br />
+                <span className="text-[#00E676]">Donate Them.</span>
+              </>
+            )}
           </h1>
 
           <p className="text-slate-200 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
-            A lot of people around the world throw away clothes, shoes, books, bags and more when they no longer have use for them — so we created this platform so that instead of wasting something good and valuable, you can simply donate it to orphanages and people in need around you.
+            {isFrench
+              ? "Tant de personnes dans le monde jettent des vêtements, des chaussures, des livres, des sacs et bien plus lorsqu'ils n'en ont plus l'utilité. Nous avons créé cette plateforme pour qu'au lieu de gaspiller des objets précieux, vous puissiez facilement les donner aux orphelinats et personnes dans le besoin autour de vous."
+              : 'A lot of people around the world throw away clothes, shoes, books, bags and more when they no longer have use for them — so we created this platform so that instead of wasting something good and valuable, you can simply donate it to orphanages and people in need around you.'}
           </p>
 
           <div className="pt-2 flex flex-wrap gap-4">
@@ -118,14 +131,14 @@ export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
               onClick={() => scrollToSection('how-it-works-section')}
               className="bg-[#00C853] hover:bg-[#00E676] active:bg-[#00C853] text-slate-950 font-black text-sm sm:text-base px-8 py-4 rounded-2xl shadow-md shadow-[#00C853]/20 hover:shadow-lg hover:shadow-[#00C853]/30 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer inline-flex items-center gap-2"
             >
-              See How It Works
+              {isFrench ? 'Comment ça marche' : 'See How It Works'}
               <ArrowRight className="w-4 h-4" />
             </button>
             <button 
               onClick={handleFilterClick}
               className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm sm:text-base px-8 py-4 rounded-2xl transition-all cursor-pointer inline-flex items-center gap-2"
             >
-              Browse Nearby Orphanages
+              {isFrench ? 'Voir les orphelinats' : 'Browse Nearby Orphanages'}
             </button>
           </div>
         </div>
@@ -135,13 +148,15 @@ export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
       <div id="how-it-works-section" className="space-y-8 scroll-mt-6">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1.5 bg-[#00C853]/10 px-3 py-1 rounded-full text-xs font-bold text-[#00C853]">
-            <span>✓ SIMPLE LOGISTICS</span>
+            <span>{isFrench ? '✓ LOGISTIQUE SIMPLE' : '✓ SIMPLE LOGISTICS'}</span>
           </div>
           <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">
-            Donate in 3 Simple Steps
+            {isFrench ? 'Donner en 3 Étapes Simples' : 'Donate in 3 Simple Steps'}
           </h2>
           <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
-            Connecting donors directly with local children's homes and non-profits in your community.
+            {isFrench 
+              ? 'Connecter directement les donateurs aux orphelinats et associations locales de votre communauté.'
+              : "Connecting donors directly with local children's homes and non-profits in your community."}
           </p>
         </div>
 
@@ -151,15 +166,17 @@ export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black font-mono text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3.5 py-1.5 rounded-full uppercase tracking-wider">
-                  Step 01
+                  {isFrench ? 'Étape 01' : 'Step 01'}
                 </span>
                 <span className="text-2xl">🏡</span>
               </div>
               <h3 className="font-display font-extrabold text-xl text-slate-900">
-                Find an orphanage near you
+                {isFrench ? 'Trouvez un orphelinat proche' : 'Find an orphanage near you'}
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                Browse our verified list of orphanages, children's homes, and community centers in your local city or region.
+                {isFrench 
+                  ? 'Consultez notre répertoire vérifié d’orphelinats et de foyers dans votre ville ou région.'
+                  : "Browse our verified list of orphanages, children's homes, and community centers in your local city or region."}
               </p>
             </div>
             <div className="pt-2">
@@ -167,7 +184,7 @@ export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
                 onClick={handleFilterClick}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00C853] hover:text-[#009624] hover:underline cursor-pointer"
               >
-                Explore Orphanage Directory &rarr;
+                {isFrench ? 'Explorer le répertoire →' : 'Explore Orphanage Directory →'}
               </button>
             </div>
           </div>
@@ -177,15 +194,17 @@ export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black font-mono text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3.5 py-1.5 rounded-full uppercase tracking-wider">
-                  Step 02
+                  {isFrench ? 'Étape 02' : 'Step 02'}
                 </span>
                 <span className="text-2xl">📱</span>
               </div>
               <h3 className="font-display font-extrabold text-xl text-slate-900">
-                Contact them about your donation.
+                {isFrench ? 'Contactez-les pour votre don' : 'Contact them about your donation.'}
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                Reach out directly via WhatsApp, phone call, or message to tell them what items you have ready to give.
+                {isFrench
+                  ? 'Échangez directement sur WhatsApp ou par téléphone pour leur décrire les articles prêts à être donnés.'
+                  : 'Reach out directly via WhatsApp, phone call, or message to tell them what items you have ready to give.'}
               </p>
             </div>
           </div>
@@ -195,15 +214,17 @@ export function DonationsPage({ onBack, onGoToFilter }: DonationsPageProps) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black font-mono text-[#00C853] bg-[#00C853]/10 border border-[#00C853]/20 px-3.5 py-1.5 rounded-full uppercase tracking-wider">
-                  Step 03
+                  {isFrench ? 'Étape 03' : 'Step 03'}
                 </span>
                 <span className="text-2xl">🚚</span>
               </div>
               <h3 className="font-display font-extrabold text-xl text-slate-900">
-                Pick up or visit
+                {isFrench ? 'Récupération ou visite sur place' : 'Pick up or visit'}
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                The orphanage will come pick up your donation or you can visit them yourself and donate.
+                {isFrench
+                  ? 'L’orphelinat viendra chercher votre don ou vous pourrez leur rendre visite pour le déposer en personne.'
+                  : 'The orphanage will come pick up your donation or you can visit them yourself and donate.'}
               </p>
             </div>
           </div>

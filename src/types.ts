@@ -37,6 +37,8 @@ export interface CashWishlistItem {
 }
 
 export interface NGO {
+  id?: string;
+  custom_slug?: string;
   username: string; // unique slug for URL: e.g., 'hope-for-all'
   name: string;
   logo: string; // Emoji or visual character

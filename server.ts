@@ -53,8 +53,9 @@ app.post('/api/track-signup', async (req, res) => {
 });
 
 // Initialize Supabase Client
+// Can use SUPABASE_SERVICE_ROLE_KEY (preferred for server-side CRM activity & contact inserts bypassing RLS) or SUPABASE_KEY
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_KEY || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || '';
 const isSupabaseConfigured = !!(supabaseUrl && supabaseKey);
 
 let supabaseClient: any = null;
@@ -84,6 +85,26 @@ interface VolunteerApplication {
   createdAt: string;
 }
 let localApplicationsDb: VolunteerApplication[] = [];
+
+// CRM contacts & activities local fallback database
+interface ContactRecord {
+  id: string;
+  ngo_id: string;
+  full_name: string;
+  phone: string;
+  email?: string | null;
+  created_at: string;
+}
+interface ActivityRecord {
+  id: string;
+  ngo_id: string;
+  contact_id: string;
+  type: string;
+  metadata?: any;
+  created_at: string;
+}
+let localContactsDb: ContactRecord[] = [];
+let localActivitiesDb: ActivityRecord[] = [];
 
 // Helper: Fetch all NGOs and compile their sub-items (physical needs, postings, cash wishlist)
 async function fetchAllNgosFromSupabase(): Promise<NGO[]> {
@@ -207,6 +228,8 @@ async function fetchAllNgosFromSupabase(): Promise<NGO[]> {
     };
 
     return {
+      id: profile.id,
+      custom_slug: profile.custom_slug,
       username,
       name: profile.ngo_name || profile.full_name || profile.email || 'Orphanage',
       logo: profile.avatar_url || '🏡',
@@ -527,6 +550,224 @@ app.post('/api/db/seed', async (req, res) => {
   } catch (err: any) {
     console.error('❌ Seeding error:', err);
     return res.status(500).json({ error: err.message, hint: 'Ensure your Supabase schema matches the required tables.' });
+  }
+});
+
+// POST /api/crm/stay-connected - CRM lead capture with deduplication & activity tracking
+app.post('/api/crm/stay-connected', async (req, res) => {
+  try {
+    const { ngo_id, ngo_slug, name, full_name, email, phone } = req.body;
+    const donorName = (full_name || name || '').trim();
+    const donorPhone = (phone || '').trim();
+    const donorEmail = (email || '').trim().toLowerCase();
+
+    if (!donorName) {
+      return res.status(400).json({ error: 'Full name is required' });
+    }
+    if (!donorPhone) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    let targetNgoId = ngo_id;
+    let contactId: string | null = null;
+    let activityId: string | null = null;
+    let syncedWithSupabase = false;
+
+    // Check if targetNgoId is a valid UUID
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetNgoId || '');
+
+    if (isSupabaseConfigured && supabaseClient) {
+      try {
+        // Resolve UUID from profiles table if needed
+        if (!isUuid) {
+          const slugToLookup = ngo_slug || targetNgoId;
+          if (slugToLookup) {
+            const { data: matchedProfiles } = await supabaseClient
+              .from('profiles')
+              .select('id')
+              .or(`custom_slug.eq.${slugToLookup},email.ilike.${slugToLookup}%`)
+              .limit(1);
+            if (matchedProfiles && matchedProfiles.length > 0) {
+              targetNgoId = matchedProfiles[0].id;
+            }
+          }
+        }
+
+        if (targetNgoId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetNgoId)) {
+          // Step 1: Check if contact exists on `contacts` table
+          // Check if current_ngo = ngo_id AND (entered email = email OR entered phone_number = phone_number)
+          let searchFilter = supabaseClient
+            .from('contacts')
+            .select('*')
+            .eq('ngo_id', targetNgoId);
+
+          if (donorEmail) {
+            searchFilter = searchFilter.or(`phone.eq.${donorPhone},email.eq.${donorEmail}`);
+          } else {
+            searchFilter = searchFilter.eq('phone', donorPhone);
+          }
+
+          const { data: existingContacts, error: searchError } = await searchFilter;
+          if (searchError) {
+            console.warn('⚠️ Contacts search notice:', searchError.message);
+          }
+
+          if (existingContacts && existingContacts.length > 0) {
+            // Contact exists: update with latest active details
+            const existing = existingContacts[0];
+            contactId = existing.id;
+            const updatePayload: any = {
+              full_name: donorName,
+              phone: donorPhone
+            };
+            if (donorEmail) {
+              updatePayload.email = donorEmail;
+            }
+
+            const { data: updatedContact, error: updateError } = await supabaseClient
+              .from('contacts')
+              .update(updatePayload)
+              .eq('id', existing.id)
+              .select()
+              .single();
+
+            if (!updateError && updatedContact) {
+              contactId = updatedContact.id;
+            }
+          } else {
+            // Contact does not exist: create new contact record
+            const insertPayload: any = {
+              ngo_id: targetNgoId,
+              full_name: donorName,
+              phone: donorPhone
+            };
+            if (donorEmail) {
+              insertPayload.email = donorEmail;
+            }
+
+            const { data: newContact, error: insertError } = await supabaseClient
+              .from('contacts')
+              .insert(insertPayload)
+              .select()
+              .single();
+
+            if (!insertError && newContact) {
+              contactId = newContact.id;
+            }
+          }
+
+          // Step 2: Record activity in activities table
+          // Setting ngo_id, contact_id, keep form_id, pledge_id, campaign_id null, and store details in metadata
+          if (contactId) {
+            const activityPayload: any = {
+              ngo_id: targetNgoId,
+              contact_id: contactId,
+              type: 'donest_lead',
+              pledge_id: null,
+              campaign_id: null,
+              form_id: null,
+              metadata: {
+                source: 'stay_connected_lead',
+                type: 'donest_lead',
+                full_name: donorName,
+                phone: donorPhone,
+                email: donorEmail || null,
+                submitted_at: new Date().toISOString()
+              }
+            };
+
+            let { data: actData, error: actError } = await supabaseClient
+              .from('activities')
+              .insert(activityPayload)
+              .select()
+              .single();
+
+            // If the database has a check constraint restricting type (e.g. check constraint only allowing 'pledge' until migration is applied),
+            // fallback gracefully to 'pledge' while preserving 'donest_lead' in the metadata
+            if (actError && actError.message && actError.message.includes('activities_type_check')) {
+              console.log('ℹ️ activities_type_check constraint active. Inserting with type: pledge and donest_lead in metadata.');
+              const fallbackPayload = {
+                ...activityPayload,
+                type: 'pledge',
+                metadata: {
+                  ...activityPayload.metadata,
+                  intended_type: 'donest_lead'
+                }
+              };
+              const retryRes = await supabaseClient
+                .from('activities')
+                .insert(fallbackPayload)
+                .select()
+                .single();
+              actData = retryRes.data;
+              actError = retryRes.error;
+            }
+
+            if (!actError && actData) {
+              activityId = actData.id;
+              syncedWithSupabase = true;
+              console.log(`✅ Activity recorded successfully in Supabase: ${activityId}`);
+            } else if (actError) {
+              console.warn('⚠️ Activities insert notice:', actError.message);
+            }
+          }
+        }
+      } catch (dbErr: any) {
+        console.warn('⚠️ Supabase CRM operation catch:', dbErr?.message);
+      }
+    }
+
+    // Local in-memory deduplication and fallback tracking
+    if (!contactId) {
+      const existingLocal = localContactsDb.find(c =>
+        c.ngo_id === (targetNgoId || ngo_slug) &&
+        (c.phone === donorPhone || (donorEmail && c.email === donorEmail))
+      );
+      if (existingLocal) {
+        existingLocal.full_name = donorName;
+        existingLocal.phone = donorPhone;
+        if (donorEmail) existingLocal.email = donorEmail;
+        contactId = existingLocal.id;
+      } else {
+        contactId = `contact_${Date.now()}`;
+        localContactsDb.push({
+          id: contactId,
+          ngo_id: targetNgoId || ngo_slug || 'unknown',
+          full_name: donorName,
+          phone: donorPhone,
+          email: donorEmail || null,
+          created_at: new Date().toISOString()
+        });
+      }
+    }
+
+    if (!activityId) {
+      activityId = `act_${Date.now()}`;
+      localActivitiesDb.push({
+        id: activityId,
+        ngo_id: targetNgoId || ngo_slug || 'unknown',
+        contact_id: contactId,
+        type: 'donest_lead',
+        metadata: {
+          source: 'stay_connected_lead',
+          full_name: donorName,
+          phone: donorPhone,
+          email: donorEmail || null,
+          created_at: new Date().toISOString()
+        },
+        created_at: new Date().toISOString()
+      });
+    }
+
+    return res.json({
+      success: true,
+      syncedWithSupabase,
+      contact_id: contactId,
+      activity_id: activityId
+    });
+  } catch (err: any) {
+    console.error('❌ CRM stay-connected error:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
 
