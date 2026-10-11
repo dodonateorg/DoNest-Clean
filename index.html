@@ -18,13 +18,45 @@
     <meta property="og:site_name" content="DoNest by DoDonate Inc." />
     <meta property="og:title" content="DoNest - Support Orphanages & Find Volunteer Opportunities in Cameroon" />
     <meta property="og:description" content="Donate physical goods directly to verified Cameroonian orphanages with zero middleman cuts, or join local volunteer networks today." />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1200" />
+    <meta property="og:image" content="https://iili.io/nVoR9ZG.png" />
+    <meta property="og:image:secure_url" content="https://iili.io/nVoR9ZG.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="DoNest - Support Orphanages & Find Volunteer Opportunities in Cameroon" />
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="DoNest - Support Orphanages & Find Volunteer Opportunities" />
     <meta name="twitter:description" content="Direct physical item donation and volunteer matching for Cameroonian orphanages." />
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1200" />
+    <meta name="twitter:image" content="https://iili.io/nVoR9ZG.png" />
+    <meta name="twitter:image:alt" content="DoNest - Support Orphanages & Find Volunteer Opportunities in Cameroon" />
+
+    <!-- Telegram & WhatsApp Rich Previews -->
+    <meta property="og:url" content="https://donest.org" />
+    <link rel="image_src" href="https://iili.io/nVoR9ZG.png" />
+
+    <!-- Pre-check language preference for Google Translate -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('donest_lang');
+          var lang = saved;
+          if (!lang) {
+            var navLang = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+            if (navLang.toLowerCase().indexOf('fr') === 0) {
+              lang = 'FR';
+            } else {
+              lang = 'EN';
+            }
+          }
+          if (lang === 'FR') {
+            document.cookie = 'googtrans=/en/fr; path=/;';
+            document.cookie = 'googtrans=/auto/fr; path=/;';
+          }
+        } catch(e) {}
+      })();
+    </script>
 
     <!-- JSON-LD Schema.org Structured Data -->
     <script id="json-ld-schema" type="application/ld+json">
@@ -35,6 +67,7 @@
       "alternateName": "DoDonate Inc.",
       "url": "https://donest.org",
       "logo": "https://iili.io/CjM0PPs.png",
+      "image": "https://iili.io/nVoR9ZG.png",
       "description": "Connecting donors and volunteers directly to verified Cameroonian orphanages and children's homes.",
       "address": {
         "@type": "PostalAddress",
@@ -45,15 +78,33 @@
       "telephone": "+237671991540",
       "email": "support@dodonate.org",
       "sameAs": [
-        "https://facebook.com/dodonateorg",
-        "https://instagram.com/dodonate_org",
-        "https://twitter.com/dodonate_org",
+        "https://facebook.com/mydodonate",
+        "https://instagram.com/mydodonate",
+        "https://x.com/mydodonate",
+        "https://tiktok.com/@mydodonate",
+        "https://linkedin.com/company/mydodonate",
         "https://dodonate.org"
       ]
     }
     </script>
   </head>
   <body>
+    <!-- Hidden Google Translate Element -->
+    <div id="google_translate_element"></div>
+    <script type="text/javascript">
+      window.googleTranslateElementInit = function() {
+        if (window.google && window.google.translate) {
+          new window.google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,fr',
+            layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false
+          }, 'google_translate_element');
+        }
+      };
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -42,6 +42,7 @@ import {
   Twitter,
   Music,
   Youtube,
+  Linkedin,
   Package,
   Calendar,
   BellRing
@@ -278,7 +279,7 @@ export default function App() {
       const saved = localStorage.getItem('donest_lang');
       if (saved === 'EN' || saved === 'FR') return saved;
       // Auto-detect browser language
-      const browserLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
+      const browserLang = ((navigator.languages && navigator.languages[0]) || navigator.language || (navigator as any).userLanguage || '').toLowerCase();
       if (browserLang.startsWith('fr')) return 'FR';
     } catch (e) {
       // Fallback
@@ -286,12 +287,68 @@ export default function App() {
     return 'EN';
   });
 
+  // Seamless Google Translate full-site DOM translation trigger
+  const triggerGoogleTranslate = (targetLang: 'EN' | 'FR') => {
+    try {
+      const code = targetLang === 'FR' ? 'fr' : 'en';
+      const host = window.location.hostname;
+
+      if (targetLang === 'FR') {
+        document.cookie = `googtrans=/en/fr; path=/;`;
+        document.cookie = `googtrans=/auto/fr; path=/;`;
+        if (host) {
+          document.cookie = `googtrans=/en/fr; path=/; domain=${host};`;
+          document.cookie = `googtrans=/auto/fr; path=/; domain=${host};`;
+        }
+      } else {
+        document.cookie = `googtrans=/en/en; path=/;`;
+        document.cookie = `googtrans=/auto/en; path=/;`;
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        if (host) {
+          document.cookie = `googtrans=/en/en; path=/; domain=${host};`;
+          document.cookie = `googtrans=/auto/en; path=/; domain=${host};`;
+          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${host};`;
+        }
+      }
+
+      const applyCombo = () => {
+        const select = document.querySelector<HTMLSelectElement>('.goog-te-combo');
+        if (select) {
+          select.value = code;
+          select.dispatchEvent(new Event('change'));
+          return true;
+        }
+        return false;
+      };
+
+      if (!applyCombo()) {
+        let attempts = 0;
+        const timer = setInterval(() => {
+          attempts++;
+          if (applyCombo() || attempts > 20) {
+            clearInterval(timer);
+          }
+        }, 250);
+      }
+    } catch (err) {
+      console.warn('Google Translate sync:', err);
+    }
+  };
+
   const changeLanguage = (newLang: 'EN' | 'FR') => {
     setLang(newLang);
     try {
       localStorage.setItem('donest_lang', newLang);
     } catch (e) {}
+    triggerGoogleTranslate(newLang);
   };
+
+  // Sync Google Translate with initial language choice / detected language on mount
+  useEffect(() => {
+    if (lang === 'FR') {
+      triggerGoogleTranslate('FR');
+    }
+  }, []);
 
   const [supabaseConfig, setSupabaseConfig] = useState<{ enabled: boolean; url: string; key: string } | null>(null);
 
@@ -2694,51 +2751,60 @@ export default function App() {
                 
                 {/* Social Capsule Card with a cute decorative red dot */}
                 <div className="relative">
-                  <div className="bg-white border-2 border-gray-100 rounded-full px-5 py-3 flex items-center justify-between gap-4 shadow-sm">
+                  <div className="bg-white border-2 border-gray-100 rounded-full px-5 py-3 flex items-center justify-between gap-3 shadow-sm">
                     <a 
-                      href="https://facebook.com/dodonateorg" 
+                      href="https://facebook.com/mydodonate" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-gray-500 hover:text-[#00C853] transition-colors p-1"
                       aria-label="Facebook"
                     >
-                      <Facebook className="w-5 h-5 stroke-[2.2]" />
+                      <Facebook className="w-4.5 h-4.5 stroke-[2.2]" />
                     </a>
                     <a 
-                      href="https://instagram.com/dodonate_org" 
+                      href="https://instagram.com/mydodonate" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-gray-500 hover:text-[#00C853] transition-colors p-1"
                       aria-label="Instagram"
                     >
-                      <Instagram className="w-5 h-5 stroke-[2.2]" />
+                      <Instagram className="w-4.5 h-4.5 stroke-[2.2]" />
                     </a>
                     <a 
-                      href="https://twitter.com/dodonate_org" 
+                      href="https://x.com/mydodonate" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-gray-500 hover:text-[#00C853] transition-colors p-1"
                       aria-label="Twitter/X"
                     >
-                      <Twitter className="w-5 h-5 stroke-[2.2]" />
+                      <Twitter className="w-4.5 h-4.5 stroke-[2.2]" />
                     </a>
                     <a 
-                      href="https://TikTok.com/dodonate" 
+                      href="https://tiktok.com/@mydodonate" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-gray-500 hover:text-[#00C853] transition-colors p-1"
                       aria-label="TikTok"
                     >
-                      <Music className="w-5 h-5 stroke-[2.2]" />
+                      <Music className="w-4.5 h-4.5 stroke-[2.2]" />
                     </a>
                     <a 
-                      href="https://youtube.com/dodonate_org" 
+                      href="https://linkedin.com/company/mydodonate" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-500 hover:text-[#00C853] transition-colors p-1"
+                      aria-label="LinkedIn"
+                    >
+                      <Linkedin className="w-4.5 h-4.5 stroke-[2.2]" />
+                    </a>
+                    <a 
+                      href="https://youtube.com/@mydodonate" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-gray-500 hover:text-[#00C853] transition-colors p-1"
                       aria-label="YouTube"
                     >
-                      <Youtube className="w-5 h-5 stroke-[2.2]" />
+                      <Youtube className="w-4.5 h-4.5 stroke-[2.2]" />
                     </a>
                   </div>
                   {/* Small decorative red dot badge representing live presence */}
