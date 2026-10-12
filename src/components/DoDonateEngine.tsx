@@ -29,7 +29,7 @@ export default function DoDonateEngine({ ngo, item, onClose, onSuccess }: DoDona
       return;
     }
     if (!phoneNumber || phoneNumber.length < 8) {
-      alert('Please enter a valid Cameroonian phone number.');
+      alert('Please enter a valid Mobile Money phone number.');
       return;
     }
 
@@ -205,7 +205,7 @@ export default function DoDonateEngine({ ngo, item, onClose, onSuccess }: DoDona
                   />
                 </div>
                 <p className="text-[11px] text-gray-500 mt-1">
-                  Enter your 9-digit Cameroonian mobile number. You will receive an instant push notification on this phone to enter your PIN.
+                  Enter your mobile number. You will receive an instant push notification on this phone to enter your PIN.
                 </p>
               </div>
 

@@ -363,7 +363,7 @@ export function DonationsPage({ onBack, onGoToFilter, lang = 'EN' }: DonationsPa
             Have Items Ready to Donate?
           </h3>
           <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-            Filter our directory of verified Cameroonian orphanages by category or city, select a center near you, and connect directly with their coordinators.
+            Filter our directory of verified African orphanages and nonprofits by category or city, select a center near you, and connect directly with their coordinators.
           </p>
         </div>
 
@@ -500,7 +500,7 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
             </div>
             <h3 className="font-display font-bold text-lg text-slate-900">A Growing Network</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Join a community of volunteers building experience, professional references, and active peer connections across all regions of Cameroon.
+              Join a community of volunteers building experience, professional references, and active peer connections across all regions of Africa.
             </p>
           </div>
         </div>
@@ -1058,7 +1058,7 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
                         required
                         value={applicantLocation}
                         onChange={(e) => setApplicantLocation(e.target.value)}
-                        placeholder="e.g. Buea, Cameroon"
+                        placeholder="e.g. Nairobi, Kenya or Lagos, Nigeria"
                         className="w-full bg-slate-50 border border-gray-200 focus:border-emerald-500 focus:bg-white rounded-xl px-4 py-3 text-xs font-medium focus:outline-none text-[#0A1120]"
                       />
                     </div>
@@ -1156,7 +1156,7 @@ export function CsrPage({ onBack }: BackProps) {
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1600" 
-            alt="Real Beneficiaries in Cameroon" 
+            alt="Real Beneficiaries in Africa" 
             className="w-full h-full object-cover object-center opacity-40 filter brightness-90 saturate-125"
             referrerPolicy="no-referrer"
           />
@@ -1205,7 +1205,7 @@ export function CsrPage({ onBack }: BackProps) {
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 md:gap-8 items-center">
               <div className="group text-center">
                 <span className="font-display font-black tracking-widest text-slate-500 text-base group-hover:text-amber-500 transition-colors duration-300 cursor-default block">MTN</span>
-                <span className="text-[9px] font-mono text-slate-600 block group-hover:text-amber-400 transition-colors">CAMEROON</span>
+                <span className="text-[9px] font-mono text-slate-600 block group-hover:text-amber-400 transition-colors">AFRICA</span>
               </div>
               <div className="group text-center">
                 <span className="font-display font-black tracking-widest text-slate-500 text-base group-hover:text-orange-500 transition-colors duration-300 cursor-default block">ORANGE</span>
@@ -1267,10 +1267,10 @@ export function CsrPage({ onBack }: BackProps) {
               <MapPin className="w-6 h-6 text-emerald-600" />
             </div>
             <h3 className="font-display font-black text-3xl text-slate-900 leading-none mb-2">
-              <AnimatedCounter target={6} />
+              <AnimatedCounter target={12} />
             </h3>
             <p className="text-xs text-gray-500 font-medium">
-              Regions covered across Cameroon
+              Regions covered across Africa
             </p>
           </div>
 
@@ -1547,7 +1547,7 @@ export function ForNgosPage({ onBack }: BackProps) {
           </h1>
           
           <p className="text-slate-300 text-sm sm:text-lg leading-relaxed">
-            DoNest solves visibility, item mismatch, and fundraising bottlenecks for Cameroonian children's homes by providing a free digital presence, precise real-time wishlists, direct WhatsApp donor leads, and 0%-commission grants.
+            DoNest solves visibility, item mismatch, and fundraising bottlenecks for African children's homes and nonprofits by providing a free digital presence, precise real-time wishlists, direct WhatsApp donor leads, and 0%-commission grants.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-2 text-xs font-bold">
@@ -1684,10 +1684,10 @@ export function ForDonorsPage({ onBack }: BackProps) {
     },
     books: {
       title: '📚 School Supplies & Textbooks',
-      description: 'Cameroonian curriculum textbooks (French & English), exercise notebooks, school bags, mathematical sets, and pens directly lower education costs for centers.',
+      description: 'School curriculum textbooks (French & English), exercise notebooks, school bags, mathematical sets, and pens directly lower education costs for centers.',
       tips: [
         'Complete exercise books or unused notebooks are preferred',
-        'Textbooks for primary and secondary levels in Cameroon',
+        'Textbooks for primary and secondary levels in Africa',
         'School backpacks and pencil cases in working condition'
       ]
     },
@@ -1765,7 +1765,7 @@ export function ForDonorsPage({ onBack }: BackProps) {
             </div>
             <h3 className="font-display font-bold text-base text-slate-900">100% Field-Verified Homes</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Every center on DoNest is audited on-site and legally verified by our Cameroon field team, giving you complete peace of mind.
+              Every center on DoNest is audited on-site and legally verified by our field team, giving you complete peace of mind.
             </p>
           </div>
 
@@ -1785,7 +1785,7 @@ export function ForDonorsPage({ onBack }: BackProps) {
             </div>
             <h3 className="font-display font-bold text-base text-slate-900">Zero Sign-Up Friction</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              No account creation, passwords, or registration needed. Simply open the app, find a center near you in Buea, Douala, or Yaoundé, and give directly.
+              No account creation, passwords, or registration needed. Simply open the app, find a center near you across Africa, and give directly.
             </p>
           </div>
 
@@ -1902,7 +1902,7 @@ export function ForCompaniesPage({ onBack }: BackProps) {
           </h1>
           
           <p className="text-slate-300 text-sm sm:text-lg leading-relaxed">
-            DoNest enables businesses across Cameroon to execute transparent, high-impact CSR initiatives—providing turnkey volunteer days, bulk supply drives, infrastructure grants, and complete tax-audited reporting.
+            DoNest enables businesses across Africa to execute transparent, high-impact CSR initiatives—providing turnkey volunteer days, bulk supply drives, infrastructure grants, and complete tax-audited reporting.
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2 text-xs font-bold">
@@ -1939,7 +1939,7 @@ export function ForCompaniesPage({ onBack }: BackProps) {
             </div>
             <h3 className="font-display font-bold text-base text-slate-900">Bulk Seasonal Drives</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Sponsor back-to-school packs, holiday food provisions, or clothing drives reaching hundreds of vulnerable children across Cameroonian cities.
+              Sponsor back-to-school packs, holiday food provisions, or clothing drives reaching hundreds of vulnerable children across African cities.
             </p>
           </div>
 
@@ -1998,7 +1998,7 @@ export function AboutUsPage({ onBack }: BackProps) {
           </h1>
 
           <p className="text-slate-200 text-base sm:text-lg leading-relaxed font-normal">
-            DoNest was engineered in Cameroon by DoDonate Inc. as an open, transparent digital bridge connecting generous citizens and organizations with verified children’s homes.
+            DoNest was engineered by DoDonate Inc. as an open, transparent digital bridge connecting generous citizens and organizations with verified children’s homes and nonprofits across Africa.
           </p>
         </div>
       </div>
@@ -2012,7 +2012,7 @@ export function AboutUsPage({ onBack }: BackProps) {
           </div>
           <h2 className="font-display font-extrabold text-2xl text-slate-900">Our Mission</h2>
           <p className="text-gray-600 text-sm leading-relaxed">
-            To empower Cameroonian children’s homes through real-time need transparency, connecting donors and volunteers directly to verified centers with zero administrative friction, zero middleman cuts, and complete operational integrity.
+            To empower African children’s homes and nonprofits through real-time need transparency, connecting donors and volunteers directly to verified centers with zero administrative friction, zero middleman cuts, and complete operational integrity.
           </p>
         </div>
 
@@ -2023,7 +2023,7 @@ export function AboutUsPage({ onBack }: BackProps) {
           </div>
           <h2 className="font-display font-extrabold text-2xl text-slate-900">Our Vision</h2>
           <p className="text-gray-600 text-sm leading-relaxed">
-            A Cameroon where no orphan or vulnerable child lacks basic food, educational supplies, or dignified care, and where every citizen and business can effortlessly share resources with local centers in need.
+            An Africa where no orphan or vulnerable child lacks basic food, educational supplies, or dignified care, and where every citizen and business can effortlessly share resources with local centers in need.
           </p>
         </div>
       </div>
@@ -2038,7 +2038,7 @@ export function AboutUsPage({ onBack }: BackProps) {
             What We Are Trying to Achieve
           </h2>
           <p className="text-xs sm:text-sm text-slate-300">
-            Four clear pillars defining our operational roadmap and impact across Cameroon.
+            Four clear pillars defining our operational roadmap and impact across Africa.
           </p>
         </div>
 
@@ -2122,7 +2122,7 @@ export function ImpactStoriesPage({ onBack }: BackProps) {
 export function ContactUsPage({ onBack }: BackProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Message received! Our team in Cameroon will get back to you within 24 hours.");
+    alert("Message received! Our team will get back to you within 24 hours.");
   };
 
   return (
@@ -2164,7 +2164,7 @@ export function ContactUsPage({ onBack }: BackProps) {
 
         {/* Contact info details */}
         <div className="lg:col-span-5 bg-white border-2 border-gray-100 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
-          <h2 className="font-display font-black text-xl text-brand-dark">Cameroon Hubs</h2>
+          <h2 className="font-display font-black text-xl text-brand-dark">African Regional Hubs</h2>
           
           <div className="space-y-4 text-xs sm:text-sm text-gray-600 font-medium">
             <div className="flex gap-3">
@@ -2179,15 +2179,15 @@ export function ContactUsPage({ onBack }: BackProps) {
               <Phone className="w-5 h-5 text-brand-green shrink-0" />
               <div>
                 <span className="block font-bold text-brand-dark">Direct Call / WhatsApp</span>
-                <span className="text-gray-500">+237 677 12 34 56</span>
+                <span className="text-gray-500">+237 671991540</span>
               </div>
             </div>
 
             <div className="flex gap-3">
               <Globe className="w-5 h-5 text-brand-green shrink-0" />
               <div>
-                <span className="block font-bold text-brand-dark">Main Office</span>
-                <span className="text-gray-500">Yaoundé Town Hall Road, Cameroon</span>
+                <span className="block font-bold text-brand-dark">Pan-African Operations</span>
+                <span className="text-gray-500">Supporting Nonprofits Across Africa</span>
               </div>
             </div>
           </div>
@@ -2249,7 +2249,7 @@ export function TermsPage({ onBack }: BackProps) {
               3. Verification Disclaimer
             </h3>
             <p className="pl-4">
-              While DoNest Inc. exercises reasonable diligence in vetting and verifying the operating licenses of partnering NGO networks in Buea and other cities in Cameroon, donors are encouraged to perform their own verification when visiting centers or arranging physical handovers.
+              While DoNest Inc. exercises reasonable diligence in vetting and verifying the operating licenses of partnering NGO networks across cities in Africa, donors are encouraged to perform their own verification when visiting centers or arranging physical handovers.
             </p>
           </div>
 
@@ -2259,7 +2259,7 @@ export function TermsPage({ onBack }: BackProps) {
               4. Direct Finance Processing
             </h3>
             <p className="pl-4">
-              Any crowdfunding or external financing handled via Mobile Money (Mtn MoMo / Orange Money) is routed directly through secure, authenticated merchant APIs. Platform tips are optional and help keep our community servers running and operational.
+              Any crowdfunding or external financing handled via Mobile Money is routed directly through secure, authenticated merchant APIs. Platform tips are optional and help keep our community servers running and operational.
             </p>
           </div>
         </div>
@@ -2297,7 +2297,7 @@ export function PrivacyPage({ onBack }: BackProps) {
         </h1>
         
         <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-3xl">
-          At DoNest, protecting the privacy of our donors, volunteers, and listed orphanages is our highest priority. We comply with modern guidelines regarding personal data transparency in Cameroon and abroad.
+          At DoNest, protecting the privacy of our donors, volunteers, and listed orphanages is our highest priority. We comply with modern guidelines regarding personal data transparency across Africa and globally.
         </p>
 
         <hr className="border-gray-100" />
@@ -2379,7 +2379,7 @@ export function SafetyPage({ onBack }: BackProps) {
               1. NonProfit Vetting Standards
             </h3>
             <p className="pl-4">
-              Every organization listed on DoNest undergoes a strict manual review process. We require official registration certificates issued by Cameroonian local authorities, licensed operation addresses, and verified contact coordinators to prevent fraud.
+              Every organization listed on DoNest undergoes a strict manual review process. We require official registration certificates issued by recognized local authorities, licensed operation addresses, and verified contact coordinators to prevent fraud.
             </p>
           </div>
 

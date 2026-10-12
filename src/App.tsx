@@ -675,72 +675,72 @@ export default function App() {
   // Dynamic Comprehensive Client-Side SEO & Schema.org Engine Hook
   useEffect(() => {
     const activeNgo = ngos.find(n => n.username === currentHash);
-    let title = 'DoNest - Support Orphanages & Find Volunteer Opportunities in Cameroon';
-    let description = 'DoNest is Cameroon\'s premier platform connecting donors directly to verified orphanages and children\'s homes. Support local centers with physical items or apply for live volunteer openings in Buea, Douala, Yaoundé, and Limbe.';
-    let keywords = 'Cameroon orphanages, volunteer opportunities Buea, physical donations Douala, Yaounde charity, children homes Limbe, DoNest, DoDonate';
+    let title = 'DoNest - Find Volunteer Opportunities & Support Nonprofits in Africa';
+    let description = 'Find volunteer opportunities and support Nonprofits with their needs. DoNest is Africa\'s premier platform connecting millions of people to verified nonprofits and children\'s homes in need.';
+    let keywords = 'volunteer opportunities Africa, support nonprofits Africa, find volunteer opportunities, donate physical items Africa, African charities, children homes Africa, DoNest, DoDonate';
     let canonicalUrl = `${window.location.origin}${window.location.pathname}`;
-    let ogImage = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1200';
+    let ogImage = 'https://iili.io/nVoR9ZG.png';
     let jsonLdType = 'WebSite';
 
     if (activeNgo) {
-      title = `${activeNgo.name} (${activeNgo.city}) - Physical Needs & Volunteer Openings | DoNest Cameroon`;
-      description = `Directly support ${activeNgo.name} in ${activeNgo.city}, Cameroon. See current physical item needs (${activeNgo.physicalNeeds.map(n => n.item).slice(0, 3).join(', ')}) or apply for volunteer roles today.`;
-      keywords = `${activeNgo.name}, ${activeNgo.city} orphanage, donate to ${activeNgo.name}, volunteer ${activeNgo.city}, Cameroon NGO needs, children home ${activeNgo.city}`;
+      title = `${activeNgo.name} (${activeNgo.city}) - Physical Needs & Volunteer Openings | DoNest Africa`;
+      description = `Directly support ${activeNgo.name} in ${activeNgo.city}. See current physical item needs (${activeNgo.physicalNeeds.map(n => n.item).slice(0, 3).join(', ')}) or apply for volunteer roles today.`;
+      keywords = `${activeNgo.name}, ${activeNgo.city} orphanage, donate to ${activeNgo.name}, volunteer ${activeNgo.city}, African NGO needs, children home ${activeNgo.city}`;
       ogImage = activeNgo.logo && activeNgo.logo.startsWith('http') ? activeNgo.logo : ogImage;
       jsonLdType = 'NGO';
     } else if (currentHash === 'solutions/donations') {
-      title = 'Direct Physical Item Donations for Cameroonian Orphanages | DoNest';
-      description = 'Bypass middlemen and donate clothing, shoes, non-perishable food, textbooks, and hygiene kits directly to verified children\'s homes across Cameroon.';
-      keywords = 'physical donations Cameroon, donate clothes Buea, food donation Douala, orphanage supplies Yaounde, direct giving Cameroon';
+      title = 'Direct Physical Item Donations for African Nonprofits & Orphanages | DoNest';
+      description = 'Bypass middlemen and donate clothing, shoes, non-perishable food, textbooks, and hygiene kits directly to verified children\'s homes across Africa.';
+      keywords = 'physical donations Africa, donate clothes, food donation Africa, orphanage supplies, direct giving Africa';
     } else if (currentHash === 'solutions/volunteer-network') {
-      title = 'Community Volunteer Hub Cameroon - Tutor, Coach & Mentor | DoNest';
-      description = 'Join Cameroon\'s premier volunteer hub for orphanages and children\'s homes. Offer tutoring, sports coaching, IT skills, or medical checkups and receive an official Attestation of Service.';
-      keywords = 'volunteer hub Cameroon, teaching volunteer Buea, sports coaching Douala, volunteer attestation, DoNest volunteer hub';
+      title = 'Pan-African Community Volunteer Hub - Tutor, Coach & Mentor | DoNest';
+      description = 'Join Africa\'s biggest volunteer hub for nonprofits, orphanages and children\'s homes. Offer tutoring, sports coaching, IT skills, or medical checkups and receive an official Attestation of Service.';
+      keywords = 'volunteer hub Africa, teaching volunteer, sports coaching Africa, volunteer attestation, DoNest volunteer hub Africa';
     } else if (currentHash === 'solutions/volunteer-opportunities') {
-      title = 'Live Volunteer Postings & Openings in Cameroon Orphanages | DoNest';
-      description = 'Browse live volunteer positions across Buea, Douala, Yaoundé, and Limbe. Connect directly via WhatsApp to coordinate schedules.';
-      keywords = 'volunteer jobs Cameroon, NGO openings Buea, weekend volunteering Yaounde, volunteer positions Douala';
+      title = 'Live Volunteer Postings & Openings in African Nonprofits | DoNest';
+      description = 'Browse live volunteer positions across Africa. Connect directly via WhatsApp to coordinate schedules.';
+      keywords = 'volunteer jobs Africa, NGO openings Africa, weekend volunteering, volunteer positions Africa';
     } else if (currentHash === 'solutions/csr') {
-      title = 'Corporate Social Responsibility (CSR) & Community Giving | DoNest Cameroon';
-      description = 'Empower local communities through strategic corporate giving, food drives, and team volunteer days with transparent audit logs and receipts.';
-      keywords = 'corporate CSR Cameroon, business giving Buea, corporate volunteering Douala, audited NGO donations';
+      title = 'Corporate Social Responsibility (CSR) & Community Giving | DoNest Africa';
+      description = 'Empower African communities through strategic corporate giving, food drives, and team volunteer days with transparent audit logs and receipts.';
+      keywords = 'corporate CSR Africa, business giving Africa, corporate volunteering Africa, audited NGO donations Africa';
     } else if (currentHash === 'solutions/wishlist') {
-      title = 'Urgent Item Wishlist - Verified Cameroonian Children\'s Homes | DoNest';
-      description = 'View high-priority physical item wishlists from verified Cameroonian orphanages in urgent need of school books, food supplies, and bedding.';
-      keywords = 'urgent orphanage wishlist, high priority needs Cameroon, donate food Buea, books Yaounde';
+      title = 'Urgent Item Wishlist - Verified African Children\'s Homes | DoNest';
+      description = 'View high-priority physical item wishlists from verified African orphanages and nonprofits in urgent need of school books, food supplies, and bedding.';
+      keywords = 'urgent orphanage wishlist Africa, high priority needs Africa, donate food, donate books Africa';
     } else if (currentHash === 'usecases/for-ngos') {
-      title = 'Register Your Orphanage or Children\'s Center | DoNest Cameroon';
-      description = 'Access a free public profile to showcase your physical item needs, educational volunteer openings, and connect with corporate sponsors across Cameroon.';
-      keywords = 'register orphanage Cameroon, list NGO Buea, nonprofit profile Yaounde, charity registration';
+      title = 'Register Your Non-Profit or Children\'s Center | DoNest Africa';
+      description = 'Access a free public profile to showcase your physical item needs, educational volunteer openings, and connect with corporate sponsors across Africa.';
+      keywords = 'register orphanage Africa, list NGO Africa, nonprofit profile Africa, charity registration Africa';
     } else if (currentHash === 'usecases/for-donors') {
-      title = 'Citizen Donor Guide: Donating Goods & Time Safely | DoNest Cameroon';
-      description = 'Turn extra clothes, shoes, books, and food into real local change. Step-by-step guide for personal drop-offs and verified handovers.';
-      keywords = 'donor guide Cameroon, donate used clothes Buea, family charity dropoff, direct handover';
+      title = 'Citizen Donor Guide: Donating Goods & Time Safely | DoNest Africa';
+      description = 'Turn extra clothes, shoes, books, and food into real local change across Africa. Step-by-step guide for personal drop-offs and verified handovers.';
+      keywords = 'donor guide Africa, donate used clothes, family charity dropoff, direct handover Africa';
     } else if (currentHash === 'usecases/for-companies') {
-      title = 'Corporate Impact & Goodwill Partner Guide | DoNest Cameroon';
-      description = 'Build shared corporate value, elevate employee morale, and earn verified impact badging through direct physical support for Cameroonian children\'s homes.';
-      keywords = 'company CSR guide, corporate goodwill Cameroon, business volunteer days, employee engagement';
+      title = 'Corporate Impact & Goodwill Partner Guide | DoNest Africa';
+      description = 'Build shared corporate value, elevate employee morale, and earn verified impact badging through direct physical support for African children\'s homes and nonprofits.';
+      keywords = 'company CSR guide Africa, corporate goodwill Africa, business volunteer days, employee engagement';
     } else if (currentHash === 'company/about-us') {
-      title = 'About DoNest & DoDonate Inc. - Direct Giving Mission in Cameroon';
-      description = 'Meet the Cameroon-based team establishing direct, transparent digital spaces to match eager volunteers and generous physical item donors with verified orphanages.';
-      keywords = 'about DoNest, DoDonate Inc, Buea Cameroon charity, direct giving mission, transparent non-profit';
+      title = 'About DoNest & DoDonate Inc. - Pan-African Direct Giving Mission';
+      description = 'Connecting millions of people to nonprofits in need. We are building the biggest volunteer hub across Africa for verified orphanages and children\'s homes.';
+      keywords = 'about DoNest, DoDonate Inc, pan African charity, volunteer hub Africa, direct giving mission';
     } else if (currentHash === 'company/contact-us') {
-      title = 'Contact DoNest Operations & Field Support | Buea & Yaoundé Cameroon';
-      description = 'Get in touch with our Cameroon field team via WhatsApp (+237 671991540) or email (support@dodonate.org). Visit our offices in Buea and Yaoundé.';
-      keywords = 'contact DoNest, DoDonate phone number, Buea NGO contact, Cameroon charity support';
+      title = 'Contact DoNest Operations & Support | Pan-African Hub';
+      description = 'Get in touch with our operations team via WhatsApp (+237 671991540) or email (support@dodonate.org).';
+      keywords = 'contact DoNest, DoDonate phone number, Africa NGO contact, African charity support';
     } else if (currentHash === 'company/impact-stories') {
-      title = 'Impact Stories & Delivery Verification Logs | DoNest Cameroon';
-      description = 'Read verified impact stories of physical item deliveries, volunteer placements, and community support across Cameroonian orphanages.';
-      keywords = 'DoNest impact stories, orphanage delivery photos, volunteer success Cameroon';
+      title = 'Impact Stories & Delivery Verification Logs | DoNest Africa';
+      description = 'Read verified impact stories of physical item deliveries, volunteer placements, and community support across African orphanages and nonprofits.';
+      keywords = 'DoNest impact stories Africa, orphanage delivery photos, volunteer success Africa';
     } else if (currentHash === 'legal/terms') {
-      title = 'Terms of Use & Platform Policy | DoNest Cameroon';
-      description = 'Terms of service and platform usage guidelines for donors, volunteers, and registered non-profit organizations on DoNest.';
+      title = 'Terms of Use & Platform Policy | DoNest Africa';
+      description = 'Terms of service and platform usage guidelines for donors, volunteers, and registered non-profit organizations on DoNest Africa.';
     } else if (currentHash === 'legal/privacy') {
-      title = 'Privacy Policy & Data Security | DoNest Cameroon';
-      description = 'Learn how DoNest protects personal data, volunteer contact information, and donor records in accordance with international security standards.';
+      title = 'Privacy Policy & Data Security | DoNest Africa';
+      description = 'Learn how DoNest protects personal data, volunteer contact information, and donor records across Africa in accordance with international security standards.';
     } else if (currentHash === 'legal/safety') {
-      title = 'Safety & Non-Profit Verification Standards | DoNest Cameroon';
-      description = 'Read our strict 4-step verification framework ensuring every listed orphanage is legal, inspected, and operating with complete transparency.';
+      title = 'Safety & Non-Profit Verification Standards | DoNest Africa';
+      description = 'Read our strict 4-step verification framework ensuring every listed orphanage in Africa is legal, inspected, and operating with complete transparency.';
     }
 
     // Update document title
@@ -808,13 +808,9 @@ export default function App() {
         "alternateName": "DoDonate Inc.",
         "url": "https://donest.org",
         "logo": "https://iili.io/CjM0PPs.png",
+        "image": "https://iili.io/nVoR9ZG.png",
         "description": description,
-        "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "Buea",
-          "addressRegion": "South-West Region",
-          "addressCountry": "Cameroon"
-        },
+        "areaServed": "Africa",
         "telephone": "+237671991540",
         "email": "support@dodonate.org"
       };
@@ -1671,7 +1667,7 @@ export default function App() {
                     className="w-full pl-10 pr-8 py-3 bg-slate-50 border-2 border-transparent focus:border-brand-green focus:bg-white rounded-2xl text-sm focus:outline-none transition-all font-bold text-gray-800 appearance-none cursor-pointer"
                   >
                     <option value="All">
-                      📍 {lang === 'EN' ? 'All Cameroon Cities' : 'Toutes les villes'}
+                      📍 {lang === 'EN' ? 'All Cities Across Africa' : 'Toutes les villes en Afrique'}
                     </option>
                     {CITIES.map(city => (
                       <option key={city} value={city}>
@@ -1758,8 +1754,8 @@ export default function App() {
                   </div>
                   <h3 className="font-display font-black text-xl sm:text-2xl tracking-tight leading-tight">
                     {lang === 'EN' 
-                      ? 'Help Cameroonian Orphanages Close Vital Physical Gaps Directly'
-                      : 'Aidez directement les orphelinats à combler leurs besoins physiques'}
+                      ? 'Help African Orphanages & Nonprofits Close Vital Needs Directly'
+                      : 'Aidez directement les orphelinats et associations en Afrique à combler leurs besoins vitaux'}
                   </h3>
                   <p className="text-gray-300 text-xs sm:text-sm leading-relaxed">
                     {lang === 'EN'

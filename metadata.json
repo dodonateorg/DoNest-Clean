@@ -1,6 +1,6 @@
 {
   "name": "DoNest",
-  "description": "Physical asset matches and community volunteer recruitment for Cameroonian and African orphanages, powered by DoDonate.",
+  "description": "Find volunteer opportunities and support Nonprofits with their needs. Africa's largest volunteer hub connecting millions of people to nonprofits in need, powered by DoDonate.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
