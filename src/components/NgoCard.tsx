@@ -45,12 +45,12 @@ export default function NgoCard({ ngo, onClick }: NgoCardProps) {
             </h3>
             
             {/* Location badge */}
-            <div className="flex items-center gap-1.5 mt-2">
-              <span className="inline-flex items-center gap-1 bg-[#00C853]/10 text-[#00C853] px-2.5 py-0.5 rounded-full text-xs font-bold">
-                <MapPin className="w-3.5 h-3.5" />
-                {ngo.city}
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <span className="inline-flex items-center gap-1 bg-[#00C853]/10 text-[#00C853] px-2.5 py-0.5 rounded-full text-xs font-bold max-w-full">
+                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{ngo.location || ngo.address || ngo.city}</span>
               </span>
-              <span className="text-gray-400 text-xs flex items-center gap-1">
+              <span className="text-gray-400 text-xs flex items-center gap-1 shrink-0">
                 <Calendar className="w-3 h-3" />
                 Listed In {ngo.establishedYear}
               </span>
@@ -88,12 +88,12 @@ export default function NgoCard({ ngo, onClick }: NgoCardProps) {
       </div>
 
       {/* Action pill button */}
-      <div className="mt-6 pt-3 flex items-center justify-between">
-        <span className="text-xs font-bold text-gray-400 group-hover:text-brand-dark transition-colors">
-          {ngo.address.split(',')[0]}
+      <div className="mt-6 pt-3 flex items-center justify-between gap-3">
+        <span className="text-xs font-bold text-gray-400 group-hover:text-brand-dark transition-colors truncate max-w-[50%]">
+          {ngo.location || ngo.address}
         </span>
         <button 
-          className="inline-flex items-center gap-1.5 bg-brand-dark group-hover:bg-brand-green text-white group-hover:text-white px-4 py-2 rounded-full text-xs font-extrabold shadow-xs transition-all duration-300"
+          className="inline-flex items-center gap-1.5 bg-brand-dark group-hover:bg-brand-green text-white group-hover:text-white px-4 py-2 rounded-full text-xs font-extrabold shadow-xs transition-all duration-300 shrink-0"
         >
           View Needs & Contact
           <ArrowUpRight className="w-3.5 h-3.5" />

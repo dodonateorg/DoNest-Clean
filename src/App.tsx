@@ -244,7 +244,6 @@ export default function App() {
   const [ngos, setNgos] = useState<NGO[]>([]);
 
   // Filtering and Searching states
-  const [selectedCity, setSelectedCity] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
@@ -1069,18 +1068,19 @@ export default function App() {
     const isLive = !ngo.account_status || ngo.account_status === 'LIVE';
     if (!isLive) return false;
 
-    const matchesCity = selectedCity === 'All' || ngo.city === selectedCity;
-    
-    const matchesQuery = searchQuery === '' || 
-      ngo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ngo.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ngo.physicalNeeds.some(n => n.item.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      ngo.city.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.trim().toLowerCase();
+    const matchesQuery = q === '' || 
+      ngo.name.toLowerCase().includes(q) ||
+      (ngo.location && ngo.location.toLowerCase().includes(q)) ||
+      (ngo.address && ngo.address.toLowerCase().includes(q)) ||
+      (ngo.city && ngo.city.toLowerCase().includes(q)) ||
+      ngo.description.toLowerCase().includes(q) ||
+      ngo.physicalNeeds.some(n => n.item.toLowerCase().includes(q));
 
     const matchesCategory = selectedCategory === 'All' ||
       ngo.physicalNeeds.some(n => n.category === selectedCategory);
 
-    return matchesCity && matchesQuery && matchesCategory;
+    return matchesQuery && matchesCategory;
   });
 
   // Find the selected NGO profile (Only LIVE profiles accessible)
@@ -1103,9 +1103,6 @@ export default function App() {
     'legal/safety'
   ];
   const isServicePage = SERVICE_HASHES.includes(currentHash);
-
-  // List of unique cities requested
-  const CITIES = ['Douala', 'Yaoundé', 'Buea', 'Bamenda', 'Kumba', 'Limbe'];
 
   // Categories helper
   const CATEGORIES = ['Education', 'Food', 'Clothing', 'Hygiene', 'Other'];
@@ -1627,79 +1624,46 @@ export default function App() {
 
               </div>
 
-              {/* Grid with Search Input and City Dropdown */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
-                
-                {/* Text search */}
-                <div className="md:col-span-8 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Search className="w-4 h-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder={
-                      lang === 'EN' 
-                        ? "Search by name, item type (e.g., 'rice', 'sweater', 'school uniform')..." 
-                        : "Rechercher par nom, type d'article (ex. 'riz', 'uniforme')..."
-                    }
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-transparent focus:border-brand-green focus:bg-white rounded-2xl text-sm focus:outline-none transition-all placeholder:text-gray-400 font-medium"
-                  />
-                  {searchQuery && (
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 text-xs font-bold"
-                    >
-                      {lang === 'EN' ? 'Clear' : 'Effacer'}
-                    </button>
-                  )}
+              {/* Search by country, town, or NGO needs */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search className="w-5 h-5 text-gray-400" />
                 </div>
-
-                {/* Stylized City Dropdown selector */}
-                <div className="md:col-span-4 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <MapPin className="w-4 h-4 text-[#00C853]" />
-                  </div>
-                  <select
-                    value={selectedCity}
-                    onChange={(e) => setSelectedCity(e.target.value)}
-                    className="w-full pl-10 pr-8 py-3 bg-slate-50 border-2 border-transparent focus:border-brand-green focus:bg-white rounded-2xl text-sm focus:outline-none transition-all font-bold text-gray-800 appearance-none cursor-pointer"
+                <input
+                  type="text"
+                  placeholder={
+                    lang === 'EN' 
+                      ? "Search country, town, NGO name or items in need..." 
+                      : "Rechercher pays, ville, nom d'ONG ou besoins..."
+                  }
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border-2 border-transparent focus:border-[#00C853] focus:bg-white rounded-2xl text-sm focus:outline-none transition-all placeholder:text-gray-400 font-medium text-gray-800 shadow-2xs"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 text-xs font-bold cursor-pointer"
                   >
-                    <option value="All">
-                      📍 {lang === 'EN' ? 'All Cities Across Africa' : 'Toutes les villes en Afrique'}
-                    </option>
-                    {CITIES.map(city => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                  </select>
-                  {/* Custom arrow for dropdown */}
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-
+                    {lang === 'EN' ? 'Clear' : 'Effacer'}
+                  </button>
+                )}
               </div>
 
               {/* Filtering summary stats */}
-              {(selectedCity !== 'All' || searchQuery !== '' || selectedCategory !== 'All') && (
+              {(searchQuery !== '' || selectedCategory !== 'All') && (
                 <div className="flex items-center justify-between pt-1.5 text-xs">
                   <div className="text-gray-500 font-medium">
                     {lang === 'EN' ? 'Found' : 'Trouvé'}{' '}
                     <strong className="text-brand-dark">{filteredNgos.length}</strong>{' '}
-                    {lang === 'EN' ? 'orphanage matching your criteria:' : 'orphelinat correspondant :'}
+                    {lang === 'EN' ? 'organizations matching your search:' : 'organisations correspondant à votre recherche :'}
                   </div>
                   <button
                     onClick={() => {
-                      setSelectedCity('All');
                       setSearchQuery('');
                       setSelectedCategory('All');
                     }}
-                    className="text-brand-green font-bold hover:underline"
+                    className="text-[#00C853] font-bold hover:underline cursor-pointer"
                   >
                     {lang === 'EN' ? 'Clear All Filters' : 'Réinitialiser les filtres'}
                   </button>
@@ -1722,22 +1686,21 @@ export default function App() {
               <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center max-w-md mx-auto space-y-4">
                 <div className="text-4xl">🔍</div>
                 <h3 className="font-display font-bold text-lg text-brand-dark">
-                  {lang === 'EN' ? 'No orphanages found' : 'Aucun orphelinat trouvé'}
+                  {lang === 'EN' ? 'No organizations found' : 'Aucune organisation trouvée'}
                 </h3>
                 <p className="text-xs text-gray-500 leading-relaxed">
                   {lang === 'EN' 
-                    ? "Try adjusting your city selector or widening your text search fields to find active charity entries."
-                    : "Essayez d'ajuster vos filtres de recherche pour trouver des associations actives."}
+                    ? "Try searching for a different country, town, or widening your search terms to find live NGOs."
+                    : "Essayez de rechercher un autre pays, une autre ville ou d'élargir vos termes de recherche."}
                 </p>
                 <button
                   onClick={() => {
-                    setSelectedCity('All');
                     setSearchQuery('');
                     setSelectedCategory('All');
                   }}
-                  className="bg-brand-dark text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-brand-dark/95 transition-colors"
+                  className="bg-brand-dark text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-brand-dark/95 transition-colors cursor-pointer"
                 >
-                  {lang === 'EN' ? 'Reset Search filters' : 'Effacer les filtres'}
+                  {lang === 'EN' ? 'Reset Search' : 'Effacer la recherche'}
                 </button>
               </div>
             )}
@@ -1867,11 +1830,11 @@ export default function App() {
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="bg-[#00C853]/10 text-[#00C853] px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {activeNgo.city}
+                      <span className="bg-[#00C853]/10 text-[#00C853] px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 max-w-full">
+                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{activeNgo.location || activeNgo.address || activeNgo.city}</span>
                       </span>
-                      <span className="text-gray-400 text-xs font-medium">
+                      <span className="text-gray-400 text-xs font-medium shrink-0">
                         {lang === 'EN' ? 'Listed In' : 'Inscrit en'} {activeNgo.establishedYear}
                       </span>
                     </div>

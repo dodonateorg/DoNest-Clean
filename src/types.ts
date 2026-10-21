@@ -42,8 +42,9 @@ export interface NGO {
   username: string; // unique slug for URL: e.g., 'hope-for-all'
   name: string;
   logo: string; // Emoji or visual character
-  city: 'Douala' | 'Yaoundé' | 'Buea' | 'Bamenda' | 'Kumba' | 'Limbe';
+  city: string;
   address: string;
+  location?: string;
   phone: string; // For WhatsApp and direct call
   whatsappMessage: string;
   description: string;

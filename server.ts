@@ -235,6 +235,7 @@ async function fetchAllNgosFromSupabase(): Promise<NGO[]> {
       logo: profile.avatar_url || '🏡',
       city: extractCity(profile.location),
       address: profile.location || 'Cameroon',
+      location: profile.location || profile.address || 'Cameroon',
       phone: profile.phone_number || '',
       whatsappMessage: 'Hi, I would like to support your orphanage!',
       description: profile.bio || 'Advancing local youth & education across communities.',
