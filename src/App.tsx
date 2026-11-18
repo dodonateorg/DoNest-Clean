@@ -63,6 +63,14 @@ import {
   PrivacyPage,
   SafetyPage
 } from './components/ServicePages';
+import { ArticlesListPage, ArticleDetailPage } from './components/ArticlesPages';
+import { VolunteerOpportunityDetailPage } from './components/VolunteerOpportunityDetailPage';
+import {
+  buildPageSeo,
+  findVolunteerPostBySlug,
+  getRoutingKeyFromPathname,
+  getVolunteerOpportunityPath
+} from './utils/seo';
 
 const getCategoryIllustration = (category: string) => {
   const cat = (category || '').toLowerCase();
@@ -118,35 +126,6 @@ const getCleanWebsiteUrl = (url: string | undefined): string => {
     clean = `https://${clean}`;
   }
   return clean;
-};
-
-const getRoutingKeyFromPathname = (pathname: string): string => {
-  // Strip trailing slash if present
-  const path = pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
-  
-  if (path === '/' || path === '') return '';
-  if (path === '/volunteers') return 'solutions/volunteer-opportunities';
-  if (path === '/solution/volunteer-network') return 'solutions/volunteer-network';
-  if (path === '/solution/donations') return 'solutions/donations';
-  if (path === '/solution/csr') return 'solutions/csr';
-  if (path === '/usecase/for-ngos') return 'usecases/for-ngos';
-  if (path === '/usecase/for-donors') return 'usecases/for-donors';
-  if (path === '/usecase/for-companies') return 'usecases/for-companies';
-  if (path === '/for-you' || path === '/usecase/for-you') return 'usecases/for-you';
-  if (path === '/about-us') return 'company/about-us';
-  if (path === '/contact-us') return 'company/contact-us';
-  if (path === '/impact-stories') return 'company/impact-stories';
-  if (path === '/legal/terms') return 'legal/terms';
-  if (path === '/legal/privacy') return 'legal/privacy';
-  if (path === '/legal/safety') return 'legal/safety';
-  
-  // For NGO profiles /{username}
-  const potentialUsername = path.startsWith('/') ? path.slice(1) : path;
-  if (potentialUsername && !potentialUsername.includes('/')) {
-    return potentialUsername;
-  }
-  
-  return '';
 };
 
 function NgoMissionBio({ description, lang }: { description: string; lang: 'EN' | 'FR' }) {
@@ -228,8 +207,10 @@ export default function App() {
       targetPath = '/legal/privacy';
     } else if (routeKey === 'legal/safety') {
       targetPath = '/legal/safety';
+    } else if (routeKey === 'articles') {
+      targetPath = '/articles';
     } else if (routeKey) {
-      targetPath = `/${routeKey}`;
+      targetPath = routeKey.startsWith('/') ? routeKey : `/${routeKey}`;
     }
     
     window.history.pushState(null, '', targetPath);
@@ -539,47 +520,8 @@ export default function App() {
           }
           
           e.preventDefault();
-          
-          let routeKey = '';
-          if (href.startsWith('#')) {
-            routeKey = href.slice(1);
-          } else {
-            if (href === '/') {
-              routeKey = '';
-            } else if (href === '/volunteers') {
-              routeKey = 'solutions/volunteer-opportunities';
-            } else if (href === '/solution/volunteer-network') {
-              routeKey = 'solutions/volunteer-network';
-            } else if (href === '/solution/donations') {
-              routeKey = 'solutions/donations';
-            } else if (href === '/solution/csr') {
-              routeKey = 'solutions/csr';
-            } else if (href === '/usecase/for-ngos') {
-              routeKey = 'usecases/for-ngos';
-            } else if (href === '/usecase/for-donors') {
-              routeKey = 'usecases/for-donors';
-            } else if (href === '/usecase/for-companies') {
-              routeKey = 'usecases/for-companies';
-            } else if (href === '/about-us') {
-              routeKey = 'company/about-us';
-            } else if (href === '/contact-us') {
-              routeKey = 'company/contact-us';
-            } else if (href === '/impact-stories') {
-              routeKey = 'company/impact-stories';
-            } else if (href === '/legal/terms') {
-              routeKey = 'legal/terms';
-            } else if (href === '/legal/privacy') {
-              routeKey = 'legal/privacy';
-            } else if (href === '/legal/safety') {
-              routeKey = 'legal/safety';
-            } else {
-              // It's /{username}
-              routeKey = href.slice(1);
-            }
-          }
-          
+
           let targetPath = href;
-          // Normalize hash target paths to clean paths
           if (href.startsWith('#')) {
             const hashKey = href.slice(1);
             if (hashKey === 'solutions/volunteer-opportunities') {
@@ -673,79 +615,14 @@ export default function App() {
 
   // Dynamic Comprehensive Client-Side SEO & Schema.org Engine Hook
   useEffect(() => {
-    const activeNgo = ngos.find(n => n.username === currentHash);
-    let title = 'DoNest - Find Volunteer Opportunities & Support Nonprofits in Africa';
-    let description = 'Find volunteer opportunities and support Nonprofits with their needs. DoNest is Africa\'s premier platform connecting millions of people to verified nonprofits and children\'s homes in need.';
-    let keywords = 'volunteer opportunities Africa, support nonprofits Africa, find volunteer opportunities, donate physical items Africa, African charities, children homes Africa, DoNest, DoDonate';
-    let canonicalUrl = `${window.location.origin}${window.location.pathname}`;
-    let ogImage = 'https://iili.io/nVoR9ZG.png';
-    let jsonLdType = 'WebSite';
+    const seo = buildPageSeo({
+      pathname: window.location.pathname,
+      origin: window.location.origin,
+      ngos
+    });
 
-    if (activeNgo) {
-      title = `${activeNgo.name} (${activeNgo.city}) - Physical Needs & Volunteer Openings | DoNest Africa`;
-      description = `Directly support ${activeNgo.name} in ${activeNgo.city}. See current physical item needs (${activeNgo.physicalNeeds.map(n => n.item).slice(0, 3).join(', ')}) or apply for volunteer roles today.`;
-      keywords = `${activeNgo.name}, ${activeNgo.city} orphanage, donate to ${activeNgo.name}, volunteer ${activeNgo.city}, African NGO needs, children home ${activeNgo.city}`;
-      ogImage = activeNgo.logo && activeNgo.logo.startsWith('http') ? activeNgo.logo : ogImage;
-      jsonLdType = 'NGO';
-    } else if (currentHash === 'solutions/donations') {
-      title = 'Direct Physical Item Donations for African Nonprofits & Orphanages | DoNest';
-      description = 'Bypass middlemen and donate clothing, shoes, non-perishable food, textbooks, and hygiene kits directly to verified children\'s homes across Africa.';
-      keywords = 'physical donations Africa, donate clothes, food donation Africa, orphanage supplies, direct giving Africa';
-    } else if (currentHash === 'solutions/volunteer-network') {
-      title = 'Pan-African Community Volunteer Hub - Tutor, Coach & Mentor | DoNest';
-      description = 'Join Africa\'s biggest volunteer hub for nonprofits, orphanages and children\'s homes. Offer tutoring, sports coaching, IT skills, or medical checkups and receive an official Attestation of Service.';
-      keywords = 'volunteer hub Africa, teaching volunteer, sports coaching Africa, volunteer attestation, DoNest volunteer hub Africa';
-    } else if (currentHash === 'solutions/volunteer-opportunities') {
-      title = 'Live Volunteer Postings & Openings in African Nonprofits | DoNest';
-      description = 'Browse live volunteer positions across Africa. Connect directly via WhatsApp to coordinate schedules.';
-      keywords = 'volunteer jobs Africa, NGO openings Africa, weekend volunteering, volunteer positions Africa';
-    } else if (currentHash === 'solutions/csr') {
-      title = 'Corporate Social Responsibility (CSR) & Community Giving | DoNest Africa';
-      description = 'Empower African communities through strategic corporate giving, food drives, and team volunteer days with transparent audit logs and receipts.';
-      keywords = 'corporate CSR Africa, business giving Africa, corporate volunteering Africa, audited NGO donations Africa';
-    } else if (currentHash === 'solutions/wishlist') {
-      title = 'Urgent Item Wishlist - Verified African Children\'s Homes | DoNest';
-      description = 'View high-priority physical item wishlists from verified African orphanages and nonprofits in urgent need of school books, food supplies, and bedding.';
-      keywords = 'urgent orphanage wishlist Africa, high priority needs Africa, donate food, donate books Africa';
-    } else if (currentHash === 'usecases/for-ngos') {
-      title = 'Register Your Non-Profit or Children\'s Center | DoNest Africa';
-      description = 'Access a free public profile to showcase your physical item needs, educational volunteer openings, and connect with corporate sponsors across Africa.';
-      keywords = 'register orphanage Africa, list NGO Africa, nonprofit profile Africa, charity registration Africa';
-    } else if (currentHash === 'usecases/for-donors') {
-      title = 'Citizen Donor Guide: Donating Goods & Time Safely | DoNest Africa';
-      description = 'Turn extra clothes, shoes, books, and food into real local change across Africa. Step-by-step guide for personal drop-offs and verified handovers.';
-      keywords = 'donor guide Africa, donate used clothes, family charity dropoff, direct handover Africa';
-    } else if (currentHash === 'usecases/for-companies') {
-      title = 'Corporate Impact & Goodwill Partner Guide | DoNest Africa';
-      description = 'Build shared corporate value, elevate employee morale, and earn verified impact badging through direct physical support for African children\'s homes and nonprofits.';
-      keywords = 'company CSR guide Africa, corporate goodwill Africa, business volunteer days, employee engagement';
-    } else if (currentHash === 'company/about-us') {
-      title = 'About DoNest & DoDonate Inc. - Pan-African Direct Giving Mission';
-      description = 'Connecting millions of people to nonprofits in need. We are building the biggest volunteer hub across Africa for verified orphanages and children\'s homes.';
-      keywords = 'about DoNest, DoDonate Inc, pan African charity, volunteer hub Africa, direct giving mission';
-    } else if (currentHash === 'company/contact-us') {
-      title = 'Contact DoNest Operations & Support | Pan-African Hub';
-      description = 'Get in touch with our operations team via WhatsApp (+237 671991540) or email (support@dodonate.org).';
-      keywords = 'contact DoNest, DoDonate phone number, Africa NGO contact, African charity support';
-    } else if (currentHash === 'company/impact-stories') {
-      title = 'Impact Stories & Delivery Verification Logs | DoNest Africa';
-      description = 'Read verified impact stories of physical item deliveries, volunteer placements, and community support across African orphanages and nonprofits.';
-      keywords = 'DoNest impact stories Africa, orphanage delivery photos, volunteer success Africa';
-    } else if (currentHash === 'legal/terms') {
-      title = 'Terms of Use & Platform Policy | DoNest Africa';
-      description = 'Terms of service and platform usage guidelines for donors, volunteers, and registered non-profit organizations on DoNest Africa.';
-    } else if (currentHash === 'legal/privacy') {
-      title = 'Privacy Policy & Data Security | DoNest Africa';
-      description = 'Learn how DoNest protects personal data, volunteer contact information, and donor records across Africa in accordance with international security standards.';
-    } else if (currentHash === 'legal/safety') {
-      title = 'Safety & Non-Profit Verification Standards | DoNest Africa';
-      description = 'Read our strict 4-step verification framework ensuring every listed orphanage in Africa is legal, inspected, and operating with complete transparency.';
-    }
+    document.title = seo.title;
 
-    // Update document title
-    document.title = title;
-
-    // Meta Tag Helper
     const updateMetaTag = (name: string, content: string, isProperty = false) => {
       const attributeName = isProperty ? 'property' : 'name';
       let tag = document.querySelector(`meta[${attributeName}="${name}"]`);
@@ -757,64 +634,67 @@ export default function App() {
       tag.setAttribute('content', content);
     };
 
-    updateMetaTag('description', description);
-    updateMetaTag('keywords', keywords);
-    
+    const removeMetaTag = (name: string, isProperty = false) => {
+      const attributeName = isProperty ? 'property' : 'name';
+      document.querySelectorAll(`meta[${attributeName}="${name}"]`).forEach(el => el.remove());
+    };
+
+    updateMetaTag('description', seo.description);
+    updateMetaTag('keywords', seo.keywords);
+    updateMetaTag('robots', seo.robots);
+
     // Open Graph Social Meta Tags
-    updateMetaTag('og:title', title, true);
-    updateMetaTag('og:description', description, true);
-    updateMetaTag('og:type', 'website', true);
-    updateMetaTag('og:url', canonicalUrl, true);
-    updateMetaTag('og:image', ogImage, true);
+    updateMetaTag('og:title', seo.title, true);
+    updateMetaTag('og:description', seo.description, true);
+    updateMetaTag('og:type', seo.ogType, true);
+    updateMetaTag('og:url', seo.canonicalUrl, true);
+    updateMetaTag('og:image', seo.ogImage, true);
+    updateMetaTag('og:image:secure_url', seo.ogImage, true);
+    updateMetaTag('og:image:alt', seo.ogImageAlt, true);
+
+    if (seo.articleMeta) {
+      updateMetaTag('article:published_time', seo.articleMeta.publishedTime, true);
+      updateMetaTag('article:modified_time', seo.articleMeta.modifiedTime, true);
+      updateMetaTag('article:section', seo.articleMeta.section, true);
+    } else {
+      removeMetaTag('article:published_time', true);
+      removeMetaTag('article:modified_time', true);
+      removeMetaTag('article:section', true);
+    }
 
     // Twitter Card Tags
     updateMetaTag('twitter:card', 'summary_large_image');
-    updateMetaTag('twitter:title', title);
-    updateMetaTag('twitter:description', description);
-    updateMetaTag('twitter:image', ogImage);
+    updateMetaTag('twitter:title', seo.title);
+    updateMetaTag('twitter:description', seo.description);
+    updateMetaTag('twitter:image', seo.ogImage);
+    updateMetaTag('twitter:image:alt', seo.ogImageAlt);
 
-    // Canonical Tag
+    // image_src & Canonical Tags
+    let imageSrcLink = document.querySelector('link[rel="image_src"]');
+    if (!imageSrcLink) {
+      imageSrcLink = document.createElement('link');
+      imageSrcLink.setAttribute('rel', 'image_src');
+      document.head.appendChild(imageSrcLink);
+    }
+    imageSrcLink.setAttribute('href', seo.ogImage);
+
     let canonicalLink = document.querySelector('link[rel="canonical"]');
     if (!canonicalLink) {
       canonicalLink = document.createElement('link');
       canonicalLink.setAttribute('rel', 'canonical');
       document.head.appendChild(canonicalLink);
     }
-    canonicalLink.setAttribute('href', canonicalUrl);
+    canonicalLink.setAttribute('href', seo.canonicalUrl);
 
     // Dynamic Schema.org JSON-LD Script
     let jsonLdScript = document.querySelector('script[id="json-ld-schema"]');
-    if (jsonLdScript) {
-      const schemaData = activeNgo ? {
-        "@context": "https://schema.org",
-        "@type": "NonProfit",
-        "name": activeNgo.name,
-        "description": activeNgo.description,
-        "url": `${window.location.origin}/${activeNgo.username}`,
-        "image": activeNgo.logo,
-        "address": {
-          "@type": "PostalAddress",
-          "addressLocality": activeNgo.city,
-          "addressCountry": "Cameroon"
-        },
-        "telephone": activeNgo.phone,
-        "email": activeNgo.email,
-        "founder": activeNgo.coordinator
-      } : {
-        "@context": "https://schema.org",
-        "@type": jsonLdType,
-        "name": "DoNest",
-        "alternateName": "DoDonate Inc.",
-        "url": "https://donest.org",
-        "logo": "https://iili.io/CjM0PPs.png",
-        "image": "https://iili.io/nVoR9ZG.png",
-        "description": description,
-        "areaServed": "Africa",
-        "telephone": "+237671991540",
-        "email": "support@dodonate.org"
-      };
-      jsonLdScript.textContent = JSON.stringify(schemaData);
+    if (!jsonLdScript) {
+      jsonLdScript = document.createElement('script');
+      jsonLdScript.setAttribute('id', 'json-ld-schema');
+      jsonLdScript.setAttribute('type', 'application/ld+json');
+      document.head.appendChild(jsonLdScript);
     }
+    jsonLdScript.textContent = JSON.stringify(seo.jsonLd);
   }, [currentHash, ngos, lang]);
 
   // Sync state changes to local storage and backend helper
@@ -1103,6 +983,26 @@ export default function App() {
     'legal/safety'
   ];
   const isServicePage = SERVICE_HASHES.includes(currentHash);
+  const isArticlesIndex = currentHash === 'articles';
+  const activeArticleSlug = currentHash.startsWith('articles/')
+    ? currentHash.slice('articles/'.length)
+    : null;
+
+  const volRouteParts = currentHash.split('/');
+  const isVolunteerOpportunityRoute = volRouteParts.length === 3 && volRouteParts[1] === 'volunteer';
+  const activeOppNgo = isVolunteerOpportunityRoute
+    ? ngos.find(n => n.username === volRouteParts[0] && (!n.account_status || n.account_status === 'LIVE'))
+    : undefined;
+  const activeOppPost = isVolunteerOpportunityRoute
+    ? findVolunteerPostBySlug(activeOppNgo, volRouteParts[2])
+    : undefined;
+
+  const isDedicatedSubView =
+    isServicePage ||
+    isArticlesIndex ||
+    !!activeArticleSlug ||
+    isVolunteerOpportunityRoute ||
+    !!activeNgo;
 
   // Categories helper
   const CATEGORIES = ['Education', 'Food', 'Clothing', 'Hygiene', 'Other'];
@@ -1125,8 +1025,20 @@ export default function App() {
             <Logo />
           </div>
 
-          {/* Action buttons: Language Toggle and Menu Hamburger */}
+          {/* Action buttons: Articles link, Language Toggle and Menu Hamburger */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <a
+              href="/articles"
+              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-black transition-all border ${
+                isArticlesIndex || !!activeArticleSlug
+                  ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
+                  : 'bg-white border-gray-200 text-[#0B1527] hover:border-[#00C853] hover:text-[#00C853]'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{lang === 'EN' ? 'Articles' : 'Articles'}</span>
+            </a>
+
             {/* Bilingual Language Toggle (EN / FR) */}
             <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-3xs">
               <button
@@ -1213,6 +1125,23 @@ export default function App() {
                 {lang === 'EN' ? 'Search Orphanages' : 'Rechercher des Orphelinats'}
               </span>
             </button>
+
+            {/* 2b. Articles & Volunteer Guides Box - Emerald Theme */}
+            <a
+              href="/articles"
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center gap-3 w-full bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-100 px-4 py-2 rounded-2xl transition-all text-left"
+            >
+              <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <BookOpen className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-display font-extrabold text-xs text-emerald-700 uppercase tracking-wide flex-1">
+                {lang === 'EN' ? 'Articles & Guides' : 'Articles & Guides'}
+              </span>
+              <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide">
+                SEO Hub
+              </span>
+            </a>
 
             {/* 3. Solutions Dropdown */}
             <div className="border border-gray-100 rounded-2xl overflow-hidden">
@@ -1450,7 +1379,7 @@ export default function App() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 mt-4">
         
         {/* VIEW 1: DYNAMIC SEARCH DIRECTORY */}
-        {(!currentHash || (!activeNgo && !isServicePage)) && (
+        {!isDedicatedSubView && (
           <div className="space-y-8 animate-fade-in">
             
             {/* Search Hero component */}
@@ -1789,8 +1718,35 @@ export default function App() {
           </div>
         )}
 
+        {/* VIEW 4: ARTICLES INDEX */}
+        {isArticlesIndex && (
+          <ArticlesListPage onBack={() => navigate('')} lang={lang} />
+        )}
+
+        {/* VIEW 5: SINGLE SEO ARTICLE PAGE */}
+        {activeArticleSlug && (
+          <ArticleDetailPage
+            slug={activeArticleSlug}
+            onBackToArticles={() => navigate('articles')}
+            onBackHome={() => navigate('')}
+          />
+        )}
+
+        {/* VIEW 6: INDIVIDUAL SEO-RANKABLE VOLUNTEER OPPORTUNITY PAGE */}
+        {isVolunteerOpportunityRoute && (
+          <VolunteerOpportunityDetailPage
+            ngo={activeOppNgo}
+            post={activeOppPost}
+            lang={lang}
+            onInterestClick={handleInterestClick}
+            hasInterested={hasInterested}
+            onBackToNgo={username => navigate(username)}
+            onBackToHub={() => navigate('solutions/volunteer-opportunities')}
+          />
+        )}
+
         {/* VIEW 2: UNIQUE NGO PROFILE SPACE */}
-        {currentHash && activeNgo && (
+        {currentHash && activeNgo && !isVolunteerOpportunityRoute && (
           <div className="space-y-8 animate-fade-in">
             
             {/* Back Navigation bar */}
@@ -2043,22 +1999,19 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {activeNgo.volunteerPostings.filter(post => post.status !== 'deleted').map((post, postIndex) => {
                     const userLiked = hasInterested(post.id);
+                    const oppPath = getVolunteerOpportunityPath(activeNgo, post);
                     
                     return (
                       <div 
                         key={post.id}
                         id={`post-${post.id}`}
-                        onClick={() => {
-                          setActiveApplyPost({ ngo: activeNgo, post });
-                          setApplicantMessage(`I am highly interested in volunteering for "${post.title}" and would love to help out!`);
-                        }}
-                        className="bg-white border-2 border-gray-100 hover:border-emerald-300 p-6 sm:p-8 rounded-3xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 relative overflow-hidden cursor-pointer group shadow-xs"
+                        className="bg-white border-2 border-gray-100 hover:border-emerald-300 p-6 sm:p-8 rounded-3xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 relative overflow-hidden group shadow-xs"
                       >
                         <div className="space-y-4">
                           {/* Top Illustration Banner */}
-                          <div className="h-36 w-full overflow-hidden relative rounded-2xl shrink-0 border border-gray-100">
-                            <VolunteerCardIllustration index={postIndex} title={post.title} city={activeNgo.city} />
-                          </div>
+                          <a href={oppPath} className="block h-36 w-full overflow-hidden relative rounded-2xl shrink-0 border border-gray-100">
+                            <VolunteerCardIllustration index={postIndex} title={post.title} city={activeNgo.location || activeNgo.city} />
+                          </a>
 
                           {/* Badge / Header info */}
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2067,16 +2020,18 @@ export default function App() {
                             </span>
                             
                             <div className="flex items-center gap-1.5 bg-slate-50 border border-gray-100 text-gray-500 px-2.5 py-1 rounded-xl text-[10px] font-bold">
-                              <MapPin className="w-3 h-3 text-emerald-500" />
-                              {activeNgo.city}
+                              <MapPin className="w-3 h-3 text-emerald-500 shrink-0" />
+                              <span className="truncate max-w-[160px]">{activeNgo.location || activeNgo.address || activeNgo.city}</span>
                             </div>
                           </div>
 
                           {/* Posting content */}
                           <div className="space-y-1.5">
-                            <h4 className="font-display font-black text-base text-brand-dark leading-snug group-hover:text-emerald-600 transition-colors">
-                              {post.title}
-                            </h4>
+                            <a href={oppPath} className="block">
+                              <h4 className="font-display font-black text-base text-brand-dark leading-snug group-hover:text-emerald-600 transition-colors">
+                                {post.title}
+                              </h4>
+                            </a>
                             <ExpandableText text={post.details} limit={50} className="text-gray-500 text-xs font-semibold leading-relaxed" />
                           </div>
 
@@ -2094,9 +2049,10 @@ export default function App() {
                         </div>
 
                         {/* Bottom controls */}
-                        <div className="pt-4 flex items-center gap-2 mt-4 border-t border-gray-100 w-full" onClick={(e) => e.stopPropagation()}>
+                        <div className="pt-4 flex items-center gap-2 mt-4 border-t border-gray-100 w-full">
                           {/* Upvote Button */}
                           <button
+                            type="button"
                             onClick={() => handleInterestClick(activeNgo.username, post.id)}
                             className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-extrabold transition-all transform active:scale-95 cursor-pointer shrink-0 ${
                               userLiked 
@@ -2109,17 +2065,14 @@ export default function App() {
                             <span>{post.initialInterestCount}</span>
                           </button>
 
-                          {/* Learn More button - Long and green */}
-                          <button
-                            onClick={() => {
-                              setActiveApplyPost({ ngo: activeNgo, post });
-                              setApplicantMessage(`I am highly interested in volunteering for "${post.title}" and would love to help out!`);
-                            }}
+                          {/* Individual SEO Opportunity Page Link */}
+                          <a
+                            href={oppPath}
                             className="flex-1 bg-[#00C853] hover:bg-[#009624] text-white py-2.5 px-4 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-3xs hover:shadow-xs cursor-pointer transition-colors"
                           >
                             <Sparkles className="w-3.5 h-3.5 text-white fill-white" />
                             <span>Learn More</span>
-                          </button>
+                          </a>
                         </div>
                       </div>
                     );
@@ -2593,6 +2546,14 @@ export default function App() {
                   <a href="/about-us" className="group flex flex-col items-start w-max">
                     <span className="font-display font-black text-[#0B1527] text-base leading-tight group-hover:text-[#00C853] transition-colors">
                       About Us
+                    </span>
+                    <div className="w-6 h-[3.5px] bg-[#FFE600] mt-1 transition-all group-hover:bg-[#00C853] group-hover:w-10"></div>
+                  </a>
+                </li>
+                <li>
+                  <a href="/articles" className="group flex flex-col items-start w-max">
+                    <span className="font-display font-black text-[#0B1527] text-base leading-tight group-hover:text-[#00C853] transition-colors">
+                      Articles & Guides
                     </span>
                     <div className="w-6 h-[3.5px] bg-[#FFE600] mt-1 transition-all group-hover:bg-[#00C853] group-hover:w-10"></div>
                   </a>

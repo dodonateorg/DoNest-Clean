@@ -36,6 +36,7 @@ import {
 import { NGO } from '../types';
 import { VolunteerCardIllustration } from './VolunteerCardIllustration';
 import { ExpandableText } from './ExpandableText';
+import { getVolunteerOpportunityPath } from '../utils/seo';
 
 interface BackProps {
   onBack: () => void;
@@ -448,13 +449,13 @@ export function VolunteerNetworkPage({ onBack, lang }: { onBack: () => void; lan
           </p>
 
           <div className="pt-4 flex flex-wrap gap-4">
-            <button 
-              onClick={() => { window.location.hash = '#solutions/volunteer-opportunities'; }}
+            <a 
+              href="/volunteers"
               className="bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white font-extrabold text-sm sm:text-base px-8 py-4 rounded-2xl shadow-md shadow-rose-500/20 hover:shadow-lg hover:shadow-rose-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer inline-flex items-center gap-2"
             >
               Become a Volunteer
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </a>
           </div>
         </div>
       </div>
@@ -833,21 +834,18 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {filteredPostings.map(({ ngo, post }, index) => {
               const isLiked = hasInterested(post.id);
+              const oppPath = getVolunteerOpportunityPath(ngo, post);
 
               return (
                 <div 
                   key={post.id}
-                  onClick={() => {
-                    setActiveApplyPost({ ngo, post });
-                    setApplicantMessage(`I am highly interested in volunteering for "${post.title}" and would love to help out!`);
-                  }}
-                  className="bg-white border-2 border-gray-100 hover:border-emerald-300 p-6 sm:p-8 rounded-3xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 relative overflow-hidden cursor-pointer group shadow-xs"
+                  className="bg-white border-2 border-gray-100 hover:border-emerald-300 p-6 sm:p-8 rounded-3xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 relative overflow-hidden group shadow-xs"
                 >
                   <div className="space-y-4">
                     {/* Top Illustration / Color Palette Vector Banner */}
-                    <div className="h-36 sm:h-40 w-full overflow-hidden relative rounded-2xl shrink-0 border border-gray-100">
-                      <VolunteerCardIllustration index={index} title={post.title} city={ngo.city} />
-                    </div>
+                    <a href={oppPath} className="block h-36 sm:h-40 w-full overflow-hidden relative rounded-2xl shrink-0 border border-gray-100">
+                      <VolunteerCardIllustration index={index} title={post.title} city={ngo.location || ngo.city} />
+                    </a>
 
                     {/* Badge / Header info */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -856,13 +854,13 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
                       </span>
                       
                       <div className="flex items-center gap-1.5 bg-slate-50 border border-gray-100 text-gray-500 px-2.5 py-1 rounded-xl text-[10px] font-bold">
-                        <MapPin className="w-3 h-3 text-emerald-500" />
-                        {ngo.city}
+                        <MapPin className="w-3 h-3 text-emerald-500 shrink-0" />
+                        <span className="truncate max-w-[160px]">{ngo.location || ngo.address || ngo.city}</span>
                       </div>
                     </div>
 
                     {/* Orphanage profile connection */}
-                    <div className="flex items-center gap-3 bg-slate-50/50 p-3 rounded-2xl border border-slate-100/50 hover:bg-slate-50 transition-colors">
+                    <a href={`/${ngo.username}`} className="flex items-center gap-3 bg-slate-50/50 p-3 rounded-2xl border border-slate-100/50 hover:bg-slate-50 transition-colors">
                       <span className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow-3xs overflow-hidden border border-gray-100 shrink-0">
                         {ngo.logo && (ngo.logo.startsWith('http') || ngo.logo.startsWith('/') || ngo.logo.startsWith('data:')) ? (
                           <img src={ngo.logo} alt={ngo.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -878,13 +876,15 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
                           Listed Orphanage Partner
                         </span>
                       </div>
-                    </div>
+                    </a>
 
                     {/* Posting content */}
                     <div className="space-y-1.5">
-                      <h4 className="font-display font-black text-base text-brand-dark leading-snug group-hover:text-emerald-600 transition-colors">
-                        {post.title}
-                      </h4>
+                      <a href={oppPath} className="block">
+                        <h4 className="font-display font-black text-base text-brand-dark leading-snug group-hover:text-emerald-600 transition-colors">
+                          {post.title}
+                        </h4>
+                      </a>
                       <ExpandableText text={post.details} limit={50} className="text-gray-500 text-xs font-semibold leading-relaxed" />
                     </div>
 
@@ -902,9 +902,10 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
                   </div>
 
                   {/* Bottom controls */}
-                  <div className="pt-4 flex items-center gap-2 mt-4 border-t border-gray-100 w-full" onClick={(e) => e.stopPropagation()}>
+                  <div className="pt-4 flex items-center gap-2 mt-4 border-t border-gray-100 w-full">
                     {/* Upvote Button */}
                     <button
+                      type="button"
                       onClick={() => onInterestClick(ngo.username, post.id)}
                       className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-extrabold transition-all transform active:scale-95 cursor-pointer shrink-0 ${
                         isLiked 
@@ -917,17 +918,14 @@ export function VolunteerOpportunitiesPage({ onBack, ngos, onInterestClick, hasI
                       <span>{post.initialInterestCount}</span>
                     </button>
 
-                    {/* Learn More button - Long and green */}
-                    <button
-                      onClick={() => {
-                        setActiveApplyPost({ ngo, post });
-                        setApplicantMessage(`I am highly interested in volunteering for "${post.title}" and would love to help out!`);
-                      }}
+                    {/* Dedicated SEO Opportunity Page Link */}
+                    <a
+                      href={oppPath}
                       className="flex-1 bg-[#00C853] hover:bg-[#009624] text-white py-2.5 px-4 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-3xs hover:shadow-xs cursor-pointer transition-colors"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-white fill-white" />
                       <span>Learn More</span>
-                    </button>
+                    </a>
                   </div>
                 </div>
               );

@@ -7,6 +7,7 @@ export interface PhysicalNeed {
   unit: string;
   urgency: 'High' | 'Medium' | 'Low';
   details?: string;
+  status?: string;
 }
 
 export interface VolunteerPosting {

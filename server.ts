@@ -1,4 +1,5 @@
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
@@ -6,6 +7,13 @@ import { createClient } from '@supabase/supabase-js';
 import { PostHog } from 'posthog-node';
 import { CAMEROON_NGOS } from './src/data/ngos';
 import { NGO } from './src/types';
+import {
+  ARTICLE_SEO_LIST,
+  buildPageSeo,
+  getArticlePath,
+  getVolunteerOpportunitySlug,
+  PageSeoResult
+} from './src/utils/seo';
 
 dotenv.config();
 
@@ -118,13 +126,13 @@ async function fetchAllNgosFromSupabase(): Promise<NGO[]> {
     .eq('account_status', 'LIVE');
   if (profilesError) throw profilesError;
 
-  // Fetch from the real essential_needs table
+  // Fetch from the real essential_needs table (include rows where status IS NULL or status != 'deleted')
   let essentialNeeds: any[] = [];
   try {
     const { data: needs, error: needsError } = await supabaseClient
       .from('essential_needs')
       .select('*')
-      .neq('status', 'deleted');
+      .or('status.is.null,status.neq.deleted');
     if (!needsError && needs) {
       essentialNeeds = needs;
     }
@@ -132,13 +140,13 @@ async function fetchAllNgosFromSupabase(): Promise<NGO[]> {
     console.warn('⚠️ Fetching from essential_needs failed:', err);
   }
 
-  // Fetch from the real volunteer_requests table
+  // Fetch from the real volunteer_requests table (include rows where status IS NULL or status != 'deleted')
   let volunteerRequests: any[] = [];
   try {
     const { data: requests, error: requestsError } = await supabaseClient
       .from('volunteer_requests')
       .select('*')
-      .neq('status', 'deleted');
+      .or('status.is.null,status.neq.deleted');
     if (!requestsError && requests) {
       volunteerRequests = requests;
     }
@@ -234,8 +242,8 @@ async function fetchAllNgosFromSupabase(): Promise<NGO[]> {
       name: profile.ngo_name || profile.full_name || profile.email || 'Orphanage',
       logo: profile.avatar_url || '🏡',
       city: extractCity(profile.location),
-      address: profile.location || 'Cameroon',
-      location: profile.location || profile.address || 'Cameroon',
+      address: profile.location || 'Africa',
+      location: profile.location || profile.address || 'Africa',
       phone: profile.phone_number || '',
       whatsappMessage: 'Hi, I would like to support your orphanage!',
       description: profile.bio || 'Advancing local youth & education across communities.',
@@ -792,20 +800,102 @@ app.get('/api/health', (req, res) => {
   }
 });
 
+// Cache timestamp for Supabase refresh during SSR / sitemap
+let lastSupabaseSyncMs = 0;
+
+async function getLatestNgosSnapshot(): Promise<NGO[]> {
+  const now = Date.now();
+  if (isSupabaseConfigured && supabaseClient && now - lastSupabaseSyncMs > 60_000) {
+    try {
+      const dbNgos = await fetchAllNgosFromSupabase();
+      const liveNgos = dbNgos.filter(n => n.account_status === 'LIVE');
+      localNgosDb = liveNgos;
+      lastSupabaseSyncMs = now;
+    } catch (err: any) {
+      console.warn('⚠️ Background SEO/Sitemap Supabase sync notice:', err?.message);
+    }
+  }
+  return localNgosDb.filter(n => !n.account_status || n.account_status === 'LIVE');
+}
+
+const escapeHtmlAttr = (val: string): string =>
+  (val || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+function injectSeoIntoHtml(html: string, seo: PageSeoResult): string {
+  const safeTitle = escapeHtmlAttr(seo.title);
+  const safeDesc = escapeHtmlAttr(seo.description);
+  const safeKeywords = escapeHtmlAttr(seo.keywords);
+  const safeCanonical = escapeHtmlAttr(seo.canonicalUrl);
+  const safeOgImage = escapeHtmlAttr(seo.ogImage);
+  const safeOgAlt = escapeHtmlAttr(seo.ogImageAlt);
+  const safeRobots = escapeHtmlAttr(seo.robots);
+  const safeJsonLd = JSON.stringify(seo.jsonLd).replace(/<\/script>/gi, '<\\/script>');
+
+  const lowerImg = (seo.ogImage || '').toLowerCase();
+  const ogImageMime = lowerImg.endsWith('.jpg') || lowerImg.endsWith('.jpeg')
+    ? 'image/jpeg'
+    : lowerImg.endsWith('.webp')
+      ? 'image/webp'
+      : 'image/png';
+
+  let result = html
+    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`)
+    .replace(/<meta\s+name="description"[^>]*>/i, `<meta name="description" content="${safeDesc}" />`)
+    .replace(/<meta\s+name="keywords"[^>]*>/i, `<meta name="keywords" content="${safeKeywords}" />`)
+    .replace(/<meta\s+name="robots"[^>]*>/i, `<meta name="robots" content="${safeRobots}" />`)
+    .replace(/<link\s+rel="canonical"[^>]*>/i, `<link rel="canonical" href="${safeCanonical}" />`)
+    .replace(/<link\s+rel="image_src"[^>]*>/i, `<link rel="image_src" href="${safeOgImage}" />`)
+    .replace(/<meta\s+property="og:type"[^>]*>/i, `<meta property="og:type" content="${seo.ogType}" />`)
+    .replace(/<meta\s+property="og:title"[^>]*>/i, `<meta property="og:title" content="${safeTitle}" />`)
+    .replace(/<meta\s+property="og:description"[^>]*>/i, `<meta property="og:description" content="${safeDesc}" />`)
+    .replace(/<meta\s+property="og:url"[^>]*>/i, `<meta property="og:url" content="${safeCanonical}" />`)
+    .replace(/<meta\s+property="og:image"\s+content="[^"]*"[^>]*>/i, `<meta property="og:image" content="${safeOgImage}" />`)
+    .replace(/<meta\s+property="og:image:secure_url"[^>]*>/i, `<meta property="og:image:secure_url" content="${safeOgImage}" />`)
+    .replace(/<meta\s+property="og:image:type"[^>]*>/i, `<meta property="og:image:type" content="${ogImageMime}" />`)
+    .replace(/<meta\s+property="og:image:alt"[^>]*>/i, `<meta property="og:image:alt" content="${safeOgAlt}" />`)
+    .replace(/<meta\s+name="twitter:title"[^>]*>/i, `<meta name="twitter:title" content="${safeTitle}" />`)
+    .replace(/<meta\s+name="twitter:description"[^>]*>/i, `<meta name="twitter:description" content="${safeDesc}" />`)
+    .replace(/<meta\s+name="twitter:image"[^>]*>/i, `<meta name="twitter:image" content="${safeOgImage}" />`)
+    .replace(/<meta\s+name="twitter:image:alt"[^>]*>/i, `<meta name="twitter:image:alt" content="${safeOgAlt}" />`)
+    .replace(
+      /<script\s+id="json-ld-schema"[^>]*>[\s\S]*?<\/script>/i,
+      `<script id="json-ld-schema" type="application/ld+json">${safeJsonLd}</script>`
+    );
+
+  if (seo.articleMeta) {
+    const extraArticleMeta = `
+    <meta property="article:published_time" content="${escapeHtmlAttr(seo.articleMeta.publishedTime)}" />
+    <meta property="article:modified_time" content="${escapeHtmlAttr(seo.articleMeta.modifiedTime)}" />
+    <meta property="article:section" content="${escapeHtmlAttr(seo.articleMeta.section)}" />`;
+    result = result.replace('</head>', `${extraArticleMeta}\n  </head>`);
+  }
+
+  return result;
+}
+
+// Ensure generated article cover images resolve cleanly in both dev & production
+app.use('/src/assets/images', express.static(path.join(process.cwd(), 'src', 'assets', 'images')));
+
 // Dynamic SEO robots.txt allowing all chat bots and crawlers
 app.get('/robots.txt', (req, res) => {
+  const protocol = req.get('x-forwarded-proto') || req.protocol;
   res.type('text/plain');
   res.send(`User-agent: *
 Allow: /
-Sitemap: ${req.protocol}://${req.get('host')}/sitemap.xml
+Sitemap: ${protocol}://${req.get('host')}/sitemap.xml
 `);
 });
 
-// Dynamic sitemap.xml featuring DoNest main solutions and all local orphanage URLs
-app.get('/sitemap.xml', (req, res) => {
+// Dynamic sitemap.xml featuring DoNest main solutions, Articles, NGOs, and individual Volunteer Opportunities
+app.get('/sitemap.xml', async (req, res) => {
   const host = req.get('host');
-  const protocol = req.protocol;
+  const protocol = req.get('x-forwarded-proto') || req.protocol;
   const baseUrl = `${protocol}://${host}`;
+  const liveNgos = await getLatestNgosSnapshot();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -813,6 +903,16 @@ app.get('/sitemap.xml', (req, res) => {
     <loc>${baseUrl}/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/volunteers</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/articles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>${baseUrl}/solution/donations</loc>
@@ -859,20 +959,35 @@ app.get('/sitemap.xml', (req, res) => {
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
-  <url>
-    <loc>${baseUrl}/volunteers</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
 `;
 
-  // Dynamic discovery of each NGO profile
-  localNgosDb.forEach(ngo => {
+  // Articles / SEO Blogs
+  ARTICLE_SEO_LIST.forEach(article => {
+    xml += `  <url>
+    <loc>${baseUrl}${getArticlePath(article)}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>\n`;
+  });
+
+  // Dynamic discovery of each LIVE NGO profile & individual Volunteer Opportunity pages
+  liveNgos.forEach(ngo => {
     xml += `  <url>
     <loc>${baseUrl}/${ngo.username}</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>\n`;
+
+    (ngo.volunteerPostings || [])
+      .filter(post => post.status !== 'deleted')
+      .forEach(post => {
+        const oppSlug = getVolunteerOpportunitySlug(post);
+        xml += `  <url>
+    <loc>${baseUrl}/${ngo.username}/volunteer/${oppSlug}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>\n`;
+      });
   });
 
   xml += `</urlset>`;
@@ -881,19 +996,74 @@ app.get('/sitemap.xml', (req, res) => {
   res.send(xml);
 });
 
-// Vite middleware & Client SPA static rendering configuration
+const isPageNavigationRequest = (req: express.Request): boolean => {
+  if (req.method !== 'GET') return false;
+  const reqPath = req.path || '/';
+  if (
+    reqPath.startsWith('/api/') ||
+    reqPath.startsWith('/@') ||
+    reqPath.startsWith('/src/') ||
+    reqPath.startsWith('/node_modules/') ||
+    reqPath.startsWith('/assets/')
+  ) {
+    return false;
+  }
+  if (path.extname(reqPath)) return false;
+  const accept = req.headers.accept || '';
+  // Allow both standard browser Accept: text/html and crawler Accept: */*
+  return accept.includes('text/html') || accept.includes('*/*') || accept === '';
+};
+
+// Vite middleware & Client SPA static rendering configuration with SSR SEO Meta Injection
 async function start() {
+  // Warm NGO cache on startup if Supabase is configured
+  await getLatestNgosSnapshot();
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
+
+    app.use(async (req, res, next) => {
+      if (!isPageNavigationRequest(req)) {
+        return next();
+      }
+      try {
+        const indexPath = path.resolve(process.cwd(), 'index.html');
+        let template = fs.readFileSync(indexPath, 'utf-8');
+        template = await vite.transformIndexHtml(req.originalUrl, template);
+
+        const protocol = req.get('x-forwarded-proto') || req.protocol;
+        const origin = `${protocol}://${req.get('host')}`;
+        const liveNgos = await getLatestNgosSnapshot();
+        const seo = buildPageSeo({ pathname: req.path, origin, ngos: liveNgos });
+        const html = injectSeoIntoHtml(template, seo);
+
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      } catch (e: any) {
+        vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
+
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.use(express.static(distPath, { index: false }));
+    app.get('*', async (req, res) => {
+      try {
+        const indexPath = path.join(distPath, 'index.html');
+        const template = fs.readFileSync(indexPath, 'utf-8');
+        const protocol = req.get('x-forwarded-proto') || req.protocol;
+        const origin = `${protocol}://${req.get('host')}`;
+        const liveNgos = await getLatestNgosSnapshot();
+        const seo = buildPageSeo({ pathname: req.path, origin, ngos: liveNgos });
+        const html = injectSeoIntoHtml(template, seo);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      } catch {
+        res.sendFile(path.join(distPath, 'index.html'));
+      }
     });
   }
 
