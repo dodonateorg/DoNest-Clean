@@ -254,6 +254,8 @@ export function getRoutingKeyFromPathname(pathname: string): string {
 export interface PageSeoResult {
   title: string;
   description: string;
+  ogTitle?: string;
+  ogDescription?: string;
   keywords: string;
   canonicalUrl: string;
   ogType: 'website' | 'article';
@@ -276,8 +278,87 @@ const getAbsoluteImageUrl = (rawUrl: string | undefined, origin: string): string
   return DEFAULT_OG_IMAGE;
 };
 
+const getNgoLogoImage = (ngo: Pick<NGO, 'logo'>, origin: string): string => {
+  const logo = (ngo.logo || '').trim();
+  if (!logo || logo.startsWith('data:')) return DEFAULT_OG_IMAGE;
+  if (logo.startsWith('http://') || logo.startsWith('https://')) return logo;
+  if (logo.startsWith('/')) return `${origin}${logo}`;
+  return DEFAULT_OG_IMAGE;
+};
+
 const getCleanLocation = (ngo: NGO): string => {
   return (ngo.location || ngo.address || ngo.city || 'Africa').trim();
+};
+
+const toIsoDate = (raw?: string, fallbackDaysOffset = 0): string => {
+  if (raw) {
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().slice(0, 10);
+    }
+  }
+  const d = new Date();
+  if (fallbackDaysOffset) d.setDate(d.getDate() + fallbackDaysOffset);
+  return d.toISOString().slice(0, 10);
+};
+
+const buildVolunteerPostingSchema = (ngo: NGO, post: VolunteerPosting, origin: string) => {
+  const oppLocation = (post.location || getCleanLocation(ngo)).trim();
+  const oppUrl = `${origin}${getVolunteerOpportunityPath(ngo, post)}`;
+  const ngoUrl = `${origin}/${ngo.username}`;
+  const ngoImg = getNgoLogoImage(ngo, origin);
+  const startIso = toIsoDate(post.startDate, 0);
+  const endDays =
+    typeof post.duration_days === 'number' && post.duration_days > 0
+      ? post.duration_days
+      : 30;
+  const endIso = toIsoDate(post.endDate, endDays);
+  const needed = post.volunteers_needed || 3;
+  const joined = post.volunteers_joined || 0;
+
+  return {
+    '@type': 'Event',
+    name: `${post.title} – Volunteer Opportunity at ${ngo.name}`,
+    description:
+      (post.details || '').replace(/\s+/g, ' ').trim() ||
+      `Volunteer as ${post.title} with ${ngo.name} in ${oppLocation}. Verified Attestation of Service eligible.`,
+    url: oppUrl,
+    image: [ngoImg],
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    isAccessibleForFree: true,
+    startDate: startIso,
+    endDate: endIso,
+    maximumAttendeeCapacity: needed,
+    remainingAttendeeCapacity: Math.max(0, needed - joined),
+    location: {
+      '@type': 'Place',
+      name: `${ngo.name} (${oppLocation})`,
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: oppLocation,
+        addressLocality: ngo.city || oppLocation
+      }
+    },
+    organizer: {
+      '@type': 'NonProfit',
+      name: ngo.name,
+      url: ngoUrl,
+      logo: ngoImg,
+      telephone: ngo.phone || undefined
+    },
+    performer: {
+      '@type': 'Organization',
+      name: ngo.name
+    },
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      url: oppUrl
+    }
+  };
 };
 
 export function buildPageSeo({
@@ -326,28 +407,90 @@ export function buildPageSeo({
     ]
   };
 
+  const homeNgoItems = liveNgos.slice(0, 30).map((ngo, idx) => {
+    const loc = getCleanLocation(ngo);
+    const activeNeeds = (ngo.physicalNeeds || []).filter(n => n.status !== 'deleted');
+    return {
+      '@type': 'ListItem',
+      position: idx + 1,
+      item: {
+        '@type': 'NonProfit',
+        name: ngo.name,
+        description: ngo.description,
+        url: `${cleanOrigin}/${ngo.username}`,
+        image: getNgoLogoImage(ngo, cleanOrigin),
+        areaServed: loc,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: loc,
+          addressLocality: ngo.city || loc
+        },
+        seeks:
+          activeNeeds.length > 0
+            ? activeNeeds.slice(0, 5).map(need => ({
+                '@type': 'Demand',
+                name: need.item,
+                category: need.category
+              }))
+            : undefined
+      }
+    };
+  });
+
+  const homeVolunteerCards = liveNgos
+    .flatMap(ngo =>
+      (ngo.volunteerPostings || [])
+        .filter(p => p.status !== 'deleted')
+        .map(post => ({ ngo, post }))
+    )
+    .slice(0, 25);
+
+  const homeGraph: any[] = [
+    {
+      ...orgPublisher,
+      image: DEFAULT_OG_IMAGE,
+      description,
+      areaServed: 'Africa',
+      telephone: '+237671991540',
+      email: 'support@dodonate.org'
+    },
+    {
+      '@type': 'WebSite',
+      name: 'DoNest',
+      url: cleanOrigin,
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: `${cleanOrigin}/?q={search_term_string}`,
+        'query-input': 'required name=search_term_string'
+      }
+    }
+  ];
+
+  if (homeNgoItems.length > 0) {
+    homeGraph.push({
+      '@type': 'ItemList',
+      name: 'Verified Nonprofits & Orphanages Across Africa',
+      numberOfItems: liveNgos.length,
+      itemListElement: homeNgoItems
+    });
+  }
+
+  if (homeVolunteerCards.length > 0) {
+    homeGraph.push({
+      '@type': 'ItemList',
+      name: 'Featured Volunteer Opportunities Across Africa',
+      numberOfItems: homeVolunteerCards.length,
+      itemListElement: homeVolunteerCards.map(({ ngo, post }, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        item: buildVolunteerPostingSchema(ngo, post, cleanOrigin)
+      }))
+    });
+  }
+
   let jsonLd: Record<string, any> = {
     '@context': 'https://schema.org',
-    '@graph': [
-      {
-        ...orgPublisher,
-        image: DEFAULT_OG_IMAGE,
-        description,
-        areaServed: 'Africa',
-        telephone: '+237671991540',
-        email: 'support@dodonate.org'
-      },
-      {
-        '@type': 'WebSite',
-        name: 'DoNest',
-        url: cleanOrigin,
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${cleanOrigin}/?q={search_term_string}`,
-          'query-input': 'required name=search_term_string'
-        }
-      }
-    ]
+    '@graph': homeGraph
   };
 
   // 1. Check Articles Index (/articles)
@@ -576,7 +719,12 @@ export function buildPageSeo({
   // 3. Check Individual Volunteer Opportunity Page (/:username/volunteer/:postSlug)
   const volSegments = routeKey.split('/');
   if (volSegments.length === 3 && volSegments[1] === 'volunteer') {
-    const ngo = liveNgos.find(n => n.username === volSegments[0]);
+    const slugLower = volSegments[0].toLowerCase();
+    const ngo = liveNgos.find(
+      n =>
+        (n.username || '').toLowerCase() === slugLower ||
+        (n.custom_slug || '').toLowerCase() === slugLower
+    );
     const post = findVolunteerPostBySlug(ngo, volSegments[2]);
     if (ngo && post) {
       const oppLocation = (post.location || getCleanLocation(ngo)).trim();
@@ -584,51 +732,20 @@ export function buildPageSeo({
       canonicalUrl = `${cleanOrigin}/${ngo.username}/volunteer/${oppSlug}`;
       title = `${post.title} – Volunteer Opportunity for ${ngo.name} | DoNest`;
       const rawDetail = (post.details || '').replace(/\s+/g, ' ').trim();
-      const snippet = rawDetail.length > 95 ? `${rawDetail.slice(0, 95)}...` : rawDetail;
-      description = `Apply as a ${post.title} for ${ngo.name} (${oppLocation}). ${snippet} Attestation of Service eligible via DoNest Africa.`;
+      const snippet = rawDetail.length > 110 ? `${rawDetail.slice(0, 110)}...` : rawDetail;
+      description = `Apply as a ${post.title} for ${ngo.name} (${oppLocation}). ${snippet} Verified Attestation of Service via DoNest.`;
+      const ogTitle = `${post.title} – ${ngo.name} (${oppLocation})`;
+      const ogDescription = rawDetail
+        ? `${rawDetail.slice(0, 145)}${rawDetail.length > 145 ? '...' : ''} — Apply via ${ngo.name} on DoNest.`
+        : description;
       keywords = `${post.title}, volunteer opportunity ${oppLocation}, find volunteer opportunities for ${ngo.name}, ${ngo.name} volunteer, ${post.category || 'community volunteering'}, volunteer in Africa, attestation of service, DoNest`;
-      ogImage =
-        ngo.logo && (ngo.logo.startsWith('http://') || ngo.logo.startsWith('https://'))
-          ? ngo.logo
-          : DEFAULT_OG_IMAGE;
+      ogImage = getNgoLogoImage(ngo, cleanOrigin);
       ogImageAlt = `${post.title} volunteer opportunity at ${ngo.name}`;
 
       jsonLd = {
         '@context': 'https://schema.org',
         '@graph': [
-          {
-            '@type': 'Event',
-            name: `${post.title} at ${ngo.name}`,
-            description: post.details || description,
-            url: canonicalUrl,
-            eventStatus: 'https://schema.org/EventScheduled',
-            eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-            isAccessibleForFree: true,
-            startDate: post.startDate || new Date().toISOString().slice(0, 10),
-            endDate: post.endDate || 'Ongoing',
-            location: {
-              '@type': 'Place',
-              name: ngo.name,
-              address: {
-                '@type': 'PostalAddress',
-                streetAddress: oppLocation,
-                addressLocality: ngo.city || oppLocation
-              }
-            },
-            organizer: {
-              '@type': 'NonProfit',
-              name: ngo.name,
-              url: `${cleanOrigin}/${ngo.username}`,
-              telephone: ngo.phone || undefined
-            },
-            offers: {
-              '@type': 'Offer',
-              price: '0',
-              priceCurrency: 'USD',
-              availability: 'https://schema.org/InStock',
-              url: canonicalUrl
-            }
-          },
+          buildVolunteerPostingSchema(ngo, post, cleanOrigin),
           {
             '@type': 'VolunteerAction',
             name: post.title,
@@ -669,6 +786,8 @@ export function buildPageSeo({
       return {
         title,
         description,
+        ogTitle,
+        ogDescription,
         keywords,
         canonicalUrl,
         ogType,
@@ -681,7 +800,12 @@ export function buildPageSeo({
   }
 
   // 4. Check Active NGO Profile Page (/:username)
-  const activeNgo = liveNgos.find(n => n.username === routeKey);
+  const routeLower = routeKey.toLowerCase();
+  const activeNgo = liveNgos.find(
+    n =>
+      (n.username || '').toLowerCase() === routeLower ||
+      (n.custom_slug || '').toLowerCase() === routeLower
+  );
   if (activeNgo) {
     const loc = getCleanLocation(activeNgo);
     const activePosts = (activeNgo.volunteerPostings || []).filter(p => p.status !== 'deleted');
@@ -695,26 +819,36 @@ export function buildPageSeo({
       .slice(0, 3)
       .join(', ');
 
-    title = `Find Volunteer Opportunities for ${activeNgo.name} (${loc}) | DoNest`;
-    description = `Find volunteer opportunities for ${activeNgo.name} in ${loc}${
-      topVols ? ` including ${topVols}` : ''
-    }${topNeeds ? `, and support vital physical needs (${topNeeds})` : ''}. Connect directly on DoNest.`;
-    keywords = `find volunteer opportunities for ${activeNgo.name}, volunteer at ${activeNgo.name}, ${activeNgo.name}, ${loc} nonprofit, ${loc} orphanage, donate to ${activeNgo.name}, volunteer ${loc}, African charity needs, DoNest`;
+    const cleanNgoBio = (activeNgo.description || '').replace(/\s+/g, ' ').trim();
+    const bioPreview =
+      cleanNgoBio.length > 155 ? `${cleanNgoBio.slice(0, 152)}...` : cleanNgoBio;
+
+    // Google snippet title + NGO-branded OpenGraph preview (Name + Description + NGO Image)
+    title = `${activeNgo.name} – Volunteer & Support (${loc}) | DoNest`;
+    description =
+      bioPreview ||
+      `Find volunteer opportunities for ${activeNgo.name} in ${loc}${
+        topVols ? ` including ${topVols}` : ''
+      }${topNeeds ? `, and support vital physical needs (${topNeeds})` : ''}. Connect directly on DoNest.`;
+
+    const ogTitle = `${activeNgo.name} (${loc})`;
+    const ogDescription =
+      bioPreview ||
+      `Support ${activeNgo.name} in ${loc}. Find volunteer opportunities and donate essential physical items directly on DoNest.`;
+
+    keywords = `${activeNgo.name}, find volunteer opportunities for ${activeNgo.name}, volunteer at ${activeNgo.name}, ${loc} nonprofit, ${loc} orphanage, donate to ${activeNgo.name}, volunteer ${loc}, African charity needs, DoNest`;
     canonicalUrl = `${cleanOrigin}/${activeNgo.username}`;
-    ogImage =
-      activeNgo.logo &&
-      (activeNgo.logo.startsWith('http://') || activeNgo.logo.startsWith('https://'))
-        ? activeNgo.logo
-        : DEFAULT_OG_IMAGE;
-    ogImageAlt = `Find volunteer opportunities and support ${activeNgo.name} on DoNest`;
+    ogImage = getNgoLogoImage(activeNgo, cleanOrigin);
+    ogImageAlt = `${activeNgo.name} – ${loc}`;
 
     const graph: any[] = [
       {
-        '@type': 'NonProfit',
+        '@type': ['NGO', 'NonProfit'],
         name: activeNgo.name,
-        description: activeNgo.description || description,
+        description: cleanNgoBio || ogDescription,
         url: canonicalUrl,
         image: ogImage,
+        logo: ogImage,
         address: {
           '@type': 'PostalAddress',
           streetAddress: loc,
@@ -722,7 +856,16 @@ export function buildPageSeo({
         },
         areaServed: loc,
         telephone: activeNgo.phone || undefined,
-        sameAs: activeNgo.website ? [activeNgo.website] : undefined
+        sameAs: activeNgo.website ? [activeNgo.website] : undefined,
+        seeks:
+          activeNeeds.length > 0
+            ? activeNeeds.map(need => ({
+                '@type': 'Demand',
+                name: need.item,
+                description: need.details || `Donate ${need.item} (${need.category}) to ${activeNgo.name}`,
+                category: need.category
+              }))
+            : undefined
       },
       {
         '@type': 'BreadcrumbList',
@@ -741,8 +884,7 @@ export function buildPageSeo({
         itemListElement: activePosts.map((post, idx) => ({
           '@type': 'ListItem',
           position: idx + 1,
-          name: post.title,
-          url: `${cleanOrigin}${getVolunteerOpportunityPath(activeNgo, post)}`
+          item: buildVolunteerPostingSchema(activeNgo, post, cleanOrigin)
         }))
       });
     }
@@ -751,6 +893,8 @@ export function buildPageSeo({
     return {
       title,
       description,
+      ogTitle,
+      ogDescription,
       keywords,
       canonicalUrl,
       ogType,
@@ -773,10 +917,7 @@ export function buildPageSeo({
     const allLiveOpps = liveNgos.flatMap(ngo =>
       (ngo.volunteerPostings || [])
         .filter(p => p.status !== 'deleted')
-        .map(post => ({
-          name: `${post.title} at ${ngo.name}`,
-          url: `${cleanOrigin}${getVolunteerOpportunityPath(ngo, post)}`
-        }))
+        .map(post => ({ ngo, post }))
     );
 
     jsonLd = {
@@ -793,11 +934,10 @@ export function buildPageSeo({
           '@type': 'ItemList',
           name: 'Live Volunteer Opportunities Across Africa',
           numberOfItems: allLiveOpps.length,
-          itemListElement: allLiveOpps.slice(0, 50).map((opp, idx) => ({
+          itemListElement: allLiveOpps.slice(0, 50).map(({ ngo, post }, idx) => ({
             '@type': 'ListItem',
             position: idx + 1,
-            name: opp.name,
-            url: opp.url
+            item: buildVolunteerPostingSchema(ngo, post, cleanOrigin)
           }))
         },
         {

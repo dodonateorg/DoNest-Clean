@@ -656,8 +656,10 @@ export default function App() {
     updateMetaTag('robots', seo.robots);
 
     // Open Graph Social Meta Tags
-    updateMetaTag('og:title', seo.title, true);
-    updateMetaTag('og:description', seo.description, true);
+    const resolvedOgTitle = seo.ogTitle || seo.title;
+    const resolvedOgDesc = seo.ogDescription || seo.description;
+    updateMetaTag('og:title', resolvedOgTitle, true);
+    updateMetaTag('og:description', resolvedOgDesc, true);
     updateMetaTag('og:type', seo.ogType, true);
     updateMetaTag('og:url', seo.canonicalUrl, true);
     updateMetaTag('og:image', seo.ogImage, true);
@@ -676,8 +678,8 @@ export default function App() {
 
     // Twitter Card Tags
     updateMetaTag('twitter:card', 'summary_large_image');
-    updateMetaTag('twitter:title', seo.title);
-    updateMetaTag('twitter:description', seo.description);
+    updateMetaTag('twitter:title', resolvedOgTitle);
+    updateMetaTag('twitter:description', resolvedOgDesc);
     updateMetaTag('twitter:image', seo.ogImage);
     updateMetaTag('twitter:image:alt', seo.ogImageAlt);
 
@@ -990,7 +992,13 @@ export default function App() {
   });
 
   // Find the selected NGO profile (Only LIVE profiles accessible)
-  const activeNgo = ngos.find(n => n.username === currentHash && (!n.account_status || n.account_status === 'LIVE'));
+  const currentHashLower = currentHash.toLowerCase();
+  const activeNgo = ngos.find(
+    n =>
+      (!n.account_status || n.account_status === 'LIVE') &&
+      ((n.username || '').toLowerCase() === currentHashLower ||
+        (n.custom_slug || '').toLowerCase() === currentHashLower)
+  );
 
   const SERVICE_HASHES = [
     'solutions/donations',
@@ -2474,11 +2482,11 @@ export default function App() {
                         onChange={(e) =>
                           setStayConnectedForm({ ...stayConnectedForm, countryCode: e.target.value })
                         }
-                        className="w-[120px] shrink-0 bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-2.5 py-3 text-xs font-bold focus:outline-none text-[#0A1120] transition-colors cursor-pointer"
+                        className="w-[96px] shrink-0 bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-2.5 py-3 text-xs font-bold focus:outline-none text-[#0A1120] transition-colors cursor-pointer"
                       >
                         {COUNTRY_DIAL_CODES.map((c) => (
-                          <option key={`${c.code}-${c.country}`} value={c.code}>
-                            {c.flag} {c.code} ({c.country})
+                          <option key={`${c.code}-${c.country}`} value={c.code} title={c.country}>
+                            {c.flag} {c.code}
                           </option>
                         ))}
                       </select>
@@ -2493,11 +2501,6 @@ export default function App() {
                         className="flex-1 min-w-0 bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-4 py-3 text-xs font-medium focus:outline-none text-[#0A1120] transition-colors"
                       />
                     </div>
-                    <p className="text-[10px] text-gray-400 font-medium">
-                      {lang === 'EN'
-                        ? `Saved format: ${stayConnectedForm.countryCode} ${stayConnectedForm.phone.trim().replace(/\D/g, '').replace(/^0+/, '') || '890082782'}`
-                        : `Format enregistré : ${stayConnectedForm.countryCode} ${stayConnectedForm.phone.trim().replace(/\D/g, '').replace(/^0+/, '') || '890082782'}`}
-                    </p>
                   </div>
 
                   {/* Email (Optional) */}

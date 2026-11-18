@@ -848,6 +848,8 @@ const escapeHtmlAttr = (val: string): string =>
 function injectSeoIntoHtml(html: string, seo: PageSeoResult): string {
   const safeTitle = escapeHtmlAttr(seo.title);
   const safeDesc = escapeHtmlAttr(seo.description);
+  const safeOgTitle = escapeHtmlAttr(seo.ogTitle || seo.title);
+  const safeOgDesc = escapeHtmlAttr(seo.ogDescription || seo.description);
   const safeKeywords = escapeHtmlAttr(seo.keywords);
   const safeCanonical = escapeHtmlAttr(seo.canonicalUrl);
   const safeOgImage = escapeHtmlAttr(seo.ogImage);
@@ -862,6 +864,9 @@ function injectSeoIntoHtml(html: string, seo: PageSeoResult): string {
       ? 'image/webp'
       : 'image/png';
 
+  const isBannerFixedDimensions =
+    seo.ogImage === 'https://iili.io/nVoR9ZG.png' || seo.ogImage === 'https://iili.io/o3jg9Wu.png';
+
   let result = html
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`)
     .replace(/<meta\s+name="description"[^>]*>/i, `<meta name="description" content="${safeDesc}" />`)
@@ -870,21 +875,27 @@ function injectSeoIntoHtml(html: string, seo: PageSeoResult): string {
     .replace(/<link\s+rel="canonical"[^>]*>/i, `<link rel="canonical" href="${safeCanonical}" />`)
     .replace(/<link\s+rel="image_src"[^>]*>/i, `<link rel="image_src" href="${safeOgImage}" />`)
     .replace(/<meta\s+property="og:type"[^>]*>/i, `<meta property="og:type" content="${seo.ogType}" />`)
-    .replace(/<meta\s+property="og:title"[^>]*>/i, `<meta property="og:title" content="${safeTitle}" />`)
-    .replace(/<meta\s+property="og:description"[^>]*>/i, `<meta property="og:description" content="${safeDesc}" />`)
+    .replace(/<meta\s+property="og:title"[^>]*>/i, `<meta property="og:title" content="${safeOgTitle}" />`)
+    .replace(/<meta\s+property="og:description"[^>]*>/i, `<meta property="og:description" content="${safeOgDesc}" />`)
     .replace(/<meta\s+property="og:url"[^>]*>/i, `<meta property="og:url" content="${safeCanonical}" />`)
     .replace(/<meta\s+property="og:image"\s+content="[^"]*"[^>]*>/i, `<meta property="og:image" content="${safeOgImage}" />`)
     .replace(/<meta\s+property="og:image:secure_url"[^>]*>/i, `<meta property="og:image:secure_url" content="${safeOgImage}" />`)
     .replace(/<meta\s+property="og:image:type"[^>]*>/i, `<meta property="og:image:type" content="${ogImageMime}" />`)
     .replace(/<meta\s+property="og:image:alt"[^>]*>/i, `<meta property="og:image:alt" content="${safeOgAlt}" />`)
-    .replace(/<meta\s+name="twitter:title"[^>]*>/i, `<meta name="twitter:title" content="${safeTitle}" />`)
-    .replace(/<meta\s+name="twitter:description"[^>]*>/i, `<meta name="twitter:description" content="${safeDesc}" />`)
+    .replace(/<meta\s+name="twitter:title"[^>]*>/i, `<meta name="twitter:title" content="${safeOgTitle}" />`)
+    .replace(/<meta\s+name="twitter:description"[^>]*>/i, `<meta name="twitter:description" content="${safeOgDesc}" />`)
     .replace(/<meta\s+name="twitter:image"[^>]*>/i, `<meta name="twitter:image" content="${safeOgImage}" />`)
     .replace(/<meta\s+name="twitter:image:alt"[^>]*>/i, `<meta name="twitter:image:alt" content="${safeOgAlt}" />`)
     .replace(
       /<script\s+id="json-ld-schema"[^>]*>[\s\S]*?<\/script>/i,
       `<script id="json-ld-schema" type="application/ld+json">${safeJsonLd}</script>`
     );
+
+  if (!isBannerFixedDimensions) {
+    result = result
+      .replace(/\s*<meta\s+property="og:image:width"[^>]*>/gi, '')
+      .replace(/\s*<meta\s+property="og:image:height"[^>]*>/gi, '');
+  }
 
   if (seo.articleMeta) {
     const extraArticleMeta = `
