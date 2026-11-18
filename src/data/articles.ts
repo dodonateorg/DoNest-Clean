@@ -311,6 +311,148 @@ export const ARTICLES: Article[] = [
     secondaryCtaHref: '/'
   },
   {
+    ...getMeta('ngo-volunteer-opportunities-in-ghana'),
+    coverImage: 'https://iili.io/o3jg9Wu.png',
+    introParagraphs: [
+      'Across Ghana, local nonprofits, youth centers, and residential children’s homes rely on dedicated volunteers to expand access to education, digital literacy, community healthcare, and mentorship. Yet whether you are a university student at UG, KNUST, or UCC looking for meaningful field experience, a young professional in Accra hoping to give back on weekends, or an international supporter planning a community visit, finding verified NGO volunteer opportunities in Ghana without paying hefty placement fees can be challenging.',
+      'Many foreign placement agencies charge hundreds or even thousands of dollars in intermediary costs, while grassroots Ghanaian organizations often lack visibility to reach willing hands directly.',
+      'With DoNest, the pan-African community hub built by DoDonate Inc., you can discover field-verified nonprofits and orphanages across Ghana, apply directly to open roles, or support urgent physical wishlists—completely free and with full transparency.'
+    ],
+    sections: [
+      {
+        id: 'top-cities-volunteering-ghana',
+        heading: 'Top Cities & Regions for Volunteering in Ghana',
+        paragraphs: [
+          'From bustling metropolitan neighborhoods in Greater Accra to community education centers in the Northern Region, Ghana offers impactful ways to serve:'
+        ],
+        destinations: [
+          {
+            country: 'Accra & Tema (Greater Accra Region)',
+            flag: '🇬🇭',
+            intro:
+              'As Ghana’s capital and commercial hub, Accra hosts community libraries, youth coding initiatives, shelters, and grassroots advocacy nonprofits across areas such as Madina, East Legon, Jamestown, and Tema.',
+            needsLabel: 'Most Needed Roles',
+            topNeeds:
+              'Weekend math and English reading support, basic IT and career readiness workshops, girls’ mentorship, and social media storytelling for local NGOs.'
+          },
+          {
+            country: 'Kumasi (Ashanti Region)',
+            flag: '🇬🇭',
+            intro:
+              'Known for its strong community networks and university ecosystem, Kumasi has active children’s homes, vocational training centers, and neighborhood health initiatives.',
+            needsLabel: 'Most Needed Roles',
+            topNeeds:
+              'Homework tutoring, vocational and artisan mentorship, health and hygiene outreach, and coordinating school supply drives.'
+          },
+          {
+            country: 'Tamale (Northern Region)',
+            flag: '🇬🇭',
+            intro:
+              'In Northern Ghana, grassroots nonprofits focus on rural education access, youth empowerment, climate resilience, and community agriculture programs.',
+            needsLabel: 'Most Needed Roles',
+            topNeeds:
+              'Literacy coaching, community nutrition awareness, project administration support, and digital skills training for students.'
+          },
+          {
+            country: 'Cape Coast & Takoradi (Central & Western Regions)',
+            flag: '🇬🇭',
+            intro:
+              'Along Ghana’s coast, local foundations welcome student volunteers and professionals to lead youth sports clinics, creative arts workshops, exam preparation, and direct care-home support.'
+          }
+        ]
+      },
+      {
+        id: 'types-of-volunteer-roles-ghana',
+        heading: 'Types of NGO Volunteer Roles Available in Ghana on DoNest',
+        paragraphs: [
+          'Everyday professional, academic, and practical skills make an immediate difference for Ghanaian nonprofits:'
+        ],
+        bullets: [
+          {
+            label: 'Education & Exam Preparation',
+            text: 'Tutor primary and JHS students in reading, mathematics, science, and BECE/WASSCE readiness.'
+          },
+          {
+            label: 'Digital Literacy & Tech Mentorship',
+            text: 'Teach foundational computer skills, graphic design, productivity tools, or introductory coding to underserved youth.'
+          },
+          {
+            label: 'Community Health & Nutrition Support',
+            text: 'Assist health educators with hygiene workshops, maternal wellness outreach, and clean-water awareness campaigns.'
+          },
+          {
+            label: 'Sports, Arts & Youth Mentoring',
+            text: 'Organize weekend football sessions, reading clubs, debate workshops, music, or creative arts activities.'
+          },
+          {
+            label: 'Nonprofit Operations & Physical Drives',
+            text: 'Support small NGOs with photography, grant research, donor communications, or organizing local drives for books, school shoes, and pantry staples.'
+          }
+        ]
+      },
+      {
+        id: 'why-volunteer-ghana-donest',
+        heading: 'Why Volunteer Through DoNest Instead of Paid Placement Agencies?',
+        bullets: [
+          {
+            label: 'Zero Middleman Fees',
+            text: 'Unlike commercial volunteer-abroad brokers that charge expensive placement fees, DoNest is 100% free for volunteers and host NGOs.'
+          },
+          {
+            label: 'Direct NGO Contact',
+            text: 'Communicate directly with local nonprofit coordinators and orphanage directors in Ghana without third-party bottlenecks.'
+          },
+          {
+            label: 'Official Attestation of Service',
+            text: 'Volunteers who complete their service hours qualify for a signed Virtual Impact Certificate and Attestation of Service—ideal for national service portfolios, scholarship applications, CVs, and LinkedIn.'
+          },
+          {
+            label: 'Verified Local Needs',
+            text: 'Browse both volunteer openings and real-time physical item wishlists so every hour or item you contribute answers an actual community need.'
+          }
+        ]
+      },
+      {
+        id: 'how-to-apply-ghana-4-steps',
+        heading: 'How to Apply for an NGO Volunteer Role in Ghana in 4 Steps',
+        steps: [
+          {
+            stepNumber: '01',
+            title: 'Explore Open Listings',
+            description:
+              'Visit donest.org/volunteers to browse active volunteer postings or search Ghana cities and towns on the DoNest home directory.'
+          },
+          {
+            stepNumber: '02',
+            title: 'Review Project Details',
+            description:
+              'Check the organization’s profile, location, weekly schedule, and the specific skills requested by the host team.'
+          },
+          {
+            stepNumber: '03',
+            title: 'Submit Your Application',
+            description:
+              'Click apply, enter your details and phone number, and send your request straight to the NGO coordinator.'
+          },
+          {
+            stepNumber: '04',
+            title: 'Serve & Earn Recognition',
+            description:
+              'Coordinate with the host team, complete your community impact hours, and earn your official Attestation of Service.'
+          }
+        ]
+      }
+    ],
+    ctaHeading: 'Ready to Volunteer in Ghana?',
+    ctaParagraphs: [
+      'Explore live volunteer openings across Ghana on DoNest or discover local nonprofits and children’s homes seeking skills and physical donations today.'
+    ],
+    primaryCtaLabel: 'Explore Volunteer Roles in Ghana',
+    primaryCtaHref: '/volunteers',
+    secondaryCtaLabel: 'Browse Verified Nonprofits',
+    secondaryCtaHref: '/'
+  },
+  {
     ...getMeta('direct-physical-item-donations-africa-orphanages'),
     coverImage: directDonationsImg,
     introParagraphs: [

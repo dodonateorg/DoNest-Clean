@@ -71,6 +71,11 @@ import {
   getRoutingKeyFromPathname,
   getVolunteerOpportunityPath
 } from './utils/seo';
+import {
+  COUNTRY_DIAL_CODES,
+  formatInternationalPhone,
+  getDefaultDialCodeForNgo
+} from './data/countryCodes';
 
 const getCategoryIllustration = (category: string) => {
   const cat = (category || '').toLowerCase();
@@ -243,8 +248,15 @@ export default function App() {
 
   // Stay Connected modal states (CRM lead capture)
   const [isStayConnectedOpen, setIsStayConnectedOpen] = useState(false);
-  const [stayConnectedForm, setStayConnectedForm] = useState({ name: '', email: '', phone: '' });
-  const [stayConnectedStatus, setStayConnectedStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [stayConnectedForm, setStayConnectedForm] = useState({
+    name: '',
+    email: '',
+    countryCode: '+237',
+    phone: ''
+  });
+  const [stayConnectedStatus, setStayConnectedStatus] = useState<
+    'idle' | 'submitting' | 'success' | 'already_subscribed' | 'error'
+  >('idle');
   const [stayConnectedError, setStayConnectedError] = useState('');
 
   // Active tab on the NGO profile detail page (Section A vs Section B)
@@ -808,7 +820,12 @@ export default function App() {
     setIsStayConnectedOpen(true);
     setStayConnectedStatus('idle');
     setStayConnectedError('');
-    setStayConnectedForm({ name: '', email: '', phone: '' });
+    setStayConnectedForm({
+      name: '',
+      email: '',
+      countryCode: getDefaultDialCodeForNgo(activeNgo),
+      phone: ''
+    });
   };
 
   const handleCloseStayConnected = () => {
@@ -824,8 +841,13 @@ export default function App() {
       setStayConnectedError(lang === 'EN' ? 'Please enter your full name.' : 'Veuillez entrer votre nom complet.');
       return;
     }
-    if (!stayConnectedForm.phone.trim()) {
-      setStayConnectedError(lang === 'EN' ? 'Please enter your phone number.' : 'Veuillez entrer votre numéro de téléphone.');
+
+    const formattedPhone = formatInternationalPhone(
+      stayConnectedForm.countryCode,
+      stayConnectedForm.phone
+    );
+    if (!formattedPhone) {
+      setStayConnectedError(lang === 'EN' ? 'Please enter a valid phone number.' : 'Veuillez entrer un numéro de téléphone valide.');
       return;
     }
 
@@ -842,7 +864,7 @@ export default function App() {
           ngo_name: activeNgo.name,
           full_name: stayConnectedForm.name.trim(),
           email: stayConnectedForm.email.trim(),
-          phone: stayConnectedForm.phone.trim()
+          phone: formattedPhone
         })
       });
 
@@ -851,7 +873,11 @@ export default function App() {
         throw new Error(data.error);
       }
 
-      setStayConnectedStatus('success');
+      if (data?.alreadySubscribed || data?.already_subscribed) {
+        setStayConnectedStatus('already_subscribed');
+      } else {
+        setStayConnectedStatus('success');
+      }
     } catch (err: any) {
       console.error('Stay connected submission error:', err);
       setStayConnectedError(err.message || 'Something went wrong. Please try again.');
@@ -1025,20 +1051,8 @@ export default function App() {
             <Logo />
           </div>
 
-          {/* Action buttons: Articles link, Language Toggle and Menu Hamburger */}
+          {/* Action buttons: Language Toggle and Menu Hamburger */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <a
-              href="/articles"
-              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-black transition-all border ${
-                isArticlesIndex || !!activeArticleSlug
-                  ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
-                  : 'bg-white border-gray-200 text-[#0B1527] hover:border-[#00C853] hover:text-[#00C853]'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>{lang === 'EN' ? 'Articles' : 'Articles'}</span>
-            </a>
-
             {/* Bilingual Language Toggle (EN / FR) */}
             <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-3xs">
               <button
@@ -1137,9 +1151,6 @@ export default function App() {
               </div>
               <span className="font-display font-extrabold text-xs text-emerald-700 uppercase tracking-wide flex-1">
                 {lang === 'EN' ? 'Articles & Guides' : 'Articles & Guides'}
-              </span>
-              <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide">
-                SEO Hub
               </span>
             </a>
 
@@ -2284,8 +2295,76 @@ export default function App() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* SCREEN 1: SUCCESS MODAL */}
-            {stayConnectedStatus === 'success' ? (
+            {/* SCREEN 1: ALREADY SUBSCRIBED MODAL */}
+            {stayConnectedStatus === 'already_subscribed' ? (
+              <div className="py-4 text-center space-y-6 animate-scale-up">
+                <div className="w-16 h-16 bg-amber-50 border-2 border-amber-200 text-amber-500 rounded-full flex items-center justify-center mx-auto shadow-xs">
+                  <BellRing className="w-7 h-7" />
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-display font-black text-2xl text-[#0B1527]">
+                    {lang === 'EN' ? 'Already Subscribed!' : 'Déjà abonné !'}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 max-w-xs mx-auto leading-relaxed">
+                    {lang === 'EN' ? (
+                      <>
+                        This phone number or email is already subscribed to updates from{' '}
+                        <strong className="text-[#00C853]">{activeNgo.name}</strong>. You&apos;re all set to receive their urgent alerts!
+                      </>
+                    ) : (
+                      <>
+                        Ce numéro de téléphone ou cette adresse e-mail est déjà abonné aux actualités de{' '}
+                        <strong className="text-[#00C853]">{activeNgo.name}</strong>.
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-emerald-50 via-green-50/60 to-amber-50/70 border border-emerald-100 rounded-2xl p-5 space-y-3.5 shadow-xs text-center">
+                  <p className="text-xs sm:text-sm font-bold text-gray-700 leading-snug">
+                    {lang === 'EN' ? (
+                      <>Want to make an even bigger impact for <span className="text-[#00C853] font-black">{activeNgo.name}</span> today?</>
+                    ) : (
+                      <>Vous souhaitez avoir encore plus d&apos;impact pour <span className="text-[#00C853] font-black">{activeNgo.name}</span> aujourd&apos;hui ?</>
+                    )}
+                  </p>
+
+                  <a
+                    href={`https://dodonate.org/donate/${activeNgo.custom_slug || activeNgo.username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-[#00C853] hover:bg-[#009624] text-white font-display font-black text-sm px-6 py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-wider"
+                  >
+                    <Heart className="w-4 h-4 fill-white text-[#00C853]" />
+                    <span>{lang === 'EN' ? 'Donate Now' : 'Faire un don'}</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  </a>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStayConnectedStatus('idle');
+                      setStayConnectedError('');
+                    }}
+                    className="text-xs font-bold text-[#0B1527] hover:text-[#00C853] transition-colors py-2 cursor-pointer"
+                  >
+                    {lang === 'EN' ? 'Try another number' : 'Essayer un autre numéro'}
+                  </button>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    type="button"
+                    onClick={handleCloseStayConnected}
+                    className="text-xs font-bold text-gray-400 hover:text-gray-700 transition-colors py-2 cursor-pointer"
+                  >
+                    {lang === 'EN' ? 'Close' : 'Fermer'}
+                  </button>
+                </div>
+              </div>
+            ) : stayConnectedStatus === 'success' ? (
+              /* SCREEN 2: SUCCESS MODAL */
               <div className="py-4 text-center space-y-6 animate-scale-up">
                 <div className="w-16 h-16 bg-gradient-to-tr from-[#00C853] to-emerald-400 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-[#00C853]/25">
                   <Check className="w-8 h-8 stroke-[3]" />
@@ -2336,7 +2415,7 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              /* SCREEN 2: POP-UP FORM */
+              /* SCREEN 3: POP-UP FORM */
               <div className="space-y-5 animate-fade-in">
                 {/* Header with Orphanage Branding */}
                 <div className="flex items-center gap-3.5">
@@ -2382,20 +2461,43 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Phone Number */}
+                  {/* Phone Number with Country Code Dropdown */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-wider text-gray-500 flex items-center justify-between">
                       <span>{lang === 'EN' ? 'Phone Number' : 'Numéro de Téléphone'}</span>
                       <span className="text-rose-500">*</span>
                     </label>
-                    <input
-                      type="tel"
-                      required
-                      value={stayConnectedForm.phone}
-                      onChange={(e) => setStayConnectedForm({ ...stayConnectedForm, phone: e.target.value })}
-                      placeholder="e.g. +237 677 123 456"
-                      className="w-full bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-4 py-3 text-xs font-medium focus:outline-none text-[#0A1120] transition-colors"
-                    />
+                    <div className="flex items-stretch gap-2">
+                      <select
+                        aria-label="Country code"
+                        value={stayConnectedForm.countryCode}
+                        onChange={(e) =>
+                          setStayConnectedForm({ ...stayConnectedForm, countryCode: e.target.value })
+                        }
+                        className="w-[120px] shrink-0 bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-2.5 py-3 text-xs font-bold focus:outline-none text-[#0A1120] transition-colors cursor-pointer"
+                      >
+                        {COUNTRY_DIAL_CODES.map((c) => (
+                          <option key={`${c.code}-${c.country}`} value={c.code}>
+                            {c.flag} {c.code} ({c.country})
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="tel"
+                        required
+                        value={stayConnectedForm.phone}
+                        onChange={(e) =>
+                          setStayConnectedForm({ ...stayConnectedForm, phone: e.target.value })
+                        }
+                        placeholder="890082782"
+                        className="flex-1 min-w-0 bg-slate-50 border border-gray-200 focus:border-[#00C853] focus:bg-white rounded-xl px-4 py-3 text-xs font-medium focus:outline-none text-[#0A1120] transition-colors"
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-medium">
+                      {lang === 'EN'
+                        ? `Saved format: ${stayConnectedForm.countryCode} ${stayConnectedForm.phone.trim().replace(/\D/g, '').replace(/^0+/, '') || '890082782'}`
+                        : `Format enregistré : ${stayConnectedForm.countryCode} ${stayConnectedForm.phone.trim().replace(/\D/g, '').replace(/^0+/, '') || '890082782'}`}
+                    </p>
                   </div>
 
                   {/* Email (Optional) */}

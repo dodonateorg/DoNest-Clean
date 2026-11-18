@@ -128,6 +128,34 @@ export const ARTICLE_SEO_LIST: ArticleSeoMeta[] = [
     ]
   },
   {
+    slug: 'ngo-volunteer-opportunities-in-ghana',
+    customPath: '/ngo-volunteer-opportunities-in-ghana',
+    headline:
+      'NGO Volunteer Opportunities in Ghana: How to Find & Apply to Verified Grassroots Projects',
+    seoTitle: 'NGO Volunteer Opportunities in Ghana (2026) | Accra, Kumasi & Tamale – DoNest',
+    description:
+      'Find verified NGO volunteer opportunities in Ghana without agency fees. Apply directly to teach, mentor youth, or support orphanages in Accra, Kumasi, Tamale, and Cape Coast and earn an official Attestation of Service.',
+    keywords:
+      'NGO volunteer opportunities in Ghana, volunteer in Ghana, volunteer in Accra, volunteer in Kumasi, volunteer in Tamale, volunteer in Cape Coast, Takoradi volunteering, Ghana orphanages volunteer, attestation of service Ghana, DoNest Ghana',
+    ogImagePath: 'https://iili.io/o3jg9Wu.png',
+    ogImageAlt:
+      'NGO Volunteer Opportunities in Ghana (2026) across Accra, Kumasi, Tamale, Cape Coast & Takoradi on DoNest',
+    publishedDate: '2026-08-19T09:00:00Z',
+    modifiedDate: '2026-08-19T09:00:00Z',
+    readingTime: '6 min read',
+    category: 'Ghana Guide',
+    author: 'DoNest Editorial Team',
+    tags: [
+      'Ghana',
+      'Accra',
+      'Kumasi',
+      'Tamale',
+      'Cape Coast',
+      'Takoradi',
+      'Attestation of Service'
+    ]
+  },
+  {
     slug: 'direct-physical-item-donations-africa-orphanages',
     headline: 'How Direct Physical Item Donations Transform African Orphanages & Nonprofits',
     seoTitle: 'Donate Clothes, Books & Food to African Orphanages | DoNest',
@@ -197,6 +225,9 @@ export function getRoutingKeyFromPathname(pathname: string): string {
   }
   if (path === '/ngo-volunteer-opportunities-in-cameroon') {
     return 'articles/ngo-volunteer-opportunities-in-cameroon';
+  }
+  if (path === '/ngo-volunteer-opportunities-in-ghana') {
+    return 'articles/ngo-volunteer-opportunities-in-ghana';
   }
   if (path.startsWith('/articles/')) {
     const articleSlug = path.slice('/articles/'.length);
@@ -486,6 +517,40 @@ export function buildPageSeo({
               position: 4,
               name: 'Show Up & Earn Your Attestation',
               text: 'Coordinate with the nonprofit director, complete your volunteer hours, and download your verified Attestation of Service.'
+            }
+          ]
+        });
+      } else if (article.slug === 'ngo-volunteer-opportunities-in-ghana') {
+        graph.push({
+          '@type': 'HowTo',
+          name: 'How to Apply for an NGO Volunteer Role in Ghana in 4 Steps',
+          description:
+            'Apply directly to verified nonprofits and orphanages in Accra, Kumasi, Tamale, Cape Coast, and Takoradi and earn an official Attestation of Service.',
+          image: ogImage,
+          step: [
+            {
+              '@type': 'HowToStep',
+              position: 1,
+              name: 'Explore Open Listings in Ghana',
+              text: 'Visit the DoNest Volunteer Hub and search open roles or filter nonprofits across Accra, Kumasi, Tamale, and Cape Coast.'
+            },
+            {
+              '@type': 'HowToStep',
+              position: 2,
+              name: 'Review Project Details & Commitment',
+              text: 'Read the host organization profile, location, weekly schedule, and specific skills needed.'
+            },
+            {
+              '@type': 'HowToStep',
+              position: 3,
+              name: 'Submit Your Direct Application',
+              text: 'Enter your contact details and submit your application straight to the local NGO coordinator with zero middleman fees.'
+            },
+            {
+              '@type': 'HowToStep',
+              position: 4,
+              name: 'Serve & Receive Your Attestation',
+              text: 'Complete your community service hours and receive your signed Virtual Impact Certificate and Attestation of Service.'
             }
           ]
         });

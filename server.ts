@@ -567,7 +567,12 @@ app.post('/api/crm/stay-connected', async (req, res) => {
   try {
     const { ngo_id, ngo_slug, name, full_name, email, phone } = req.body;
     const donorName = (full_name || name || '').trim();
-    const donorPhone = (phone || '').trim();
+    const donorPhone = (phone || '').trim().replace(/\s+/g, ' ');
+    const compactPhone = donorPhone.replace(/[\s\-()]/g, '');
+    const strippedPlusPhone = compactPhone.replace(/^\+/, '');
+    const phoneVariants = Array.from(
+      new Set([donorPhone, compactPhone, strippedPlusPhone].filter(Boolean))
+    );
     const donorEmail = (email || '').trim().toLowerCase();
 
     if (!donorName) {
@@ -603,66 +608,71 @@ app.post('/api/crm/stay-connected', async (req, res) => {
         }
 
         if (targetNgoId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetNgoId)) {
-          // Step 1: Check if contact exists on `contacts` table
-          // Check if current_ngo = ngo_id AND (entered email = email OR entered phone_number = phone_number)
-          let searchFilter = supabaseClient
+          // Step 1: Check if contact already exists on `contacts` table for this NGO by phone OR email
+          let existingContact: any = null;
+
+          const { data: phoneMatches, error: phoneSearchError } = await supabaseClient
             .from('contacts')
             .select('*')
-            .eq('ngo_id', targetNgoId);
+            .eq('ngo_id', targetNgoId)
+            .in('phone', phoneVariants)
+            .limit(1);
 
+          if (phoneSearchError) {
+            console.warn('⚠️ Contacts phone search notice:', phoneSearchError.message);
+          }
+          if (phoneMatches && phoneMatches.length > 0) {
+            existingContact = phoneMatches[0];
+          }
+
+          if (!existingContact && donorEmail) {
+            const { data: emailMatches, error: emailSearchError } = await supabaseClient
+              .from('contacts')
+              .select('*')
+              .eq('ngo_id', targetNgoId)
+              .ilike('email', donorEmail)
+              .limit(1);
+
+            if (emailSearchError) {
+              console.warn('⚠️ Contacts email search notice:', emailSearchError.message);
+            }
+            if (emailMatches && emailMatches.length > 0) {
+              existingContact = emailMatches[0];
+            }
+          }
+
+          if (existingContact) {
+            // Contact already exists for this NGO -> return alreadySubscribed without adding duplicate contact/activity
+            return res.json({
+              success: true,
+              alreadySubscribed: true,
+              already_subscribed: true,
+              syncedWithSupabase: true,
+              contact_id: existingContact.id,
+              message: 'You are already subscribed to updates from this organization.'
+            });
+          }
+
+          // Contact does not exist -> create new contact record
+          const insertPayload: any = {
+            ngo_id: targetNgoId,
+            full_name: donorName,
+            phone: donorPhone
+          };
           if (donorEmail) {
-            searchFilter = searchFilter.or(`phone.eq.${donorPhone},email.eq.${donorEmail}`);
-          } else {
-            searchFilter = searchFilter.eq('phone', donorPhone);
+            insertPayload.email = donorEmail;
           }
 
-          const { data: existingContacts, error: searchError } = await searchFilter;
-          if (searchError) {
-            console.warn('⚠️ Contacts search notice:', searchError.message);
-          }
+          const { data: newContact, error: insertError } = await supabaseClient
+            .from('contacts')
+            .insert(insertPayload)
+            .select()
+            .single();
 
-          if (existingContacts && existingContacts.length > 0) {
-            // Contact exists: update with latest active details
-            const existing = existingContacts[0];
-            contactId = existing.id;
-            const updatePayload: any = {
-              full_name: donorName,
-              phone: donorPhone
-            };
-            if (donorEmail) {
-              updatePayload.email = donorEmail;
-            }
-
-            const { data: updatedContact, error: updateError } = await supabaseClient
-              .from('contacts')
-              .update(updatePayload)
-              .eq('id', existing.id)
-              .select()
-              .single();
-
-            if (!updateError && updatedContact) {
-              contactId = updatedContact.id;
-            }
-          } else {
-            // Contact does not exist: create new contact record
-            const insertPayload: any = {
-              ngo_id: targetNgoId,
-              full_name: donorName,
-              phone: donorPhone
-            };
-            if (donorEmail) {
-              insertPayload.email = donorEmail;
-            }
-
-            const { data: newContact, error: insertError } = await supabaseClient
-              .from('contacts')
-              .insert(insertPayload)
-              .select()
-              .single();
-
-            if (!insertError && newContact) {
-              contactId = newContact.id;
-            }
+          if (!insertError && newContact) {
+            contactId = newContact.id;
+          } else if (insertError) {
+            console.warn('⚠️ Contacts insert notice:', insertError.message);
           }
 
           // Step 2: Record activity in activities table
@@ -691,8 +701,7 @@ app.post('/api/crm/stay-connected', async (req, res) => {
               .select()
               .single();
 
-            // If the database has a check constraint restricting type (e.g. check constraint only allowing 'pledge' until migration is applied),
-            // fallback gracefully to 'pledge' while preserving 'donest_lead' in the metadata
+            // Fallback gracefully if activities_type_check restricts type
             if (actError && actError.message && actError.message.includes('activities_type_check')) {
               console.log('ℹ️ activities_type_check constraint active. Inserting with type: pledge and donest_lead in metadata.');
               const fallbackPayload = {
@@ -726,28 +735,38 @@ app.post('/api/crm/stay-connected', async (req, res) => {
       }
     }
 
-    // Local in-memory deduplication and fallback tracking
+    // Local in-memory deduplication and fallback tracking (when Supabase is absent or unresolved)
     if (!contactId) {
-      const existingLocal = localContactsDb.find(c =>
-        c.ngo_id === (targetNgoId || ngo_slug) &&
-        (c.phone === donorPhone || (donorEmail && c.email === donorEmail))
-      );
+      const localNgoKey = targetNgoId || ngo_slug || 'unknown';
+      const existingLocal = localContactsDb.find(c => {
+        if (c.ngo_id !== localNgoKey) return false;
+        const cCompactPhone = (c.phone || '').replace(/[\s\-()]/g, '');
+        const cEmail = (c.email || '').trim().toLowerCase();
+        const phoneMatched = phoneVariants.includes(c.phone) || phoneVariants.includes(cCompactPhone);
+        const emailMatched = Boolean(donorEmail && cEmail && cEmail === donorEmail);
+        return phoneMatched || emailMatched;
+      });
+
       if (existingLocal) {
-        existingLocal.full_name = donorName;
-        existingLocal.phone = donorPhone;
-        if (donorEmail) existingLocal.email = donorEmail;
-        contactId = existingLocal.id;
-      } else {
-        contactId = `contact_${Date.now()}`;
-        localContactsDb.push({
-          id: contactId,
-          ngo_id: targetNgoId || ngo_slug || 'unknown',
-          full_name: donorName,
-          phone: donorPhone,
-          email: donorEmail || null,
-          created_at: new Date().toISOString()
+        return res.json({
+          success: true,
+          alreadySubscribed: true,
+          already_subscribed: true,
+          syncedWithSupabase: false,
+          contact_id: existingLocal.id,
+          message: 'You are already subscribed to updates from this organization.'
         });
       }
+
+      contactId = `contact_${Date.now()}`;
+      localContactsDb.push({
+        id: contactId,
+        ngo_id: localNgoKey,
+        full_name: donorName,
+        phone: donorPhone,
+        email: donorEmail || null,
+        created_at: new Date().toISOString()
+      });
     }
 
     if (!activityId) {
@@ -770,6 +789,7 @@ app.post('/api/crm/stay-connected', async (req, res) => {
 
     return res.json({
       success: true,
+      alreadySubscribed: false,
       syncedWithSupabase,
       contact_id: contactId,
       activity_id: activityId
